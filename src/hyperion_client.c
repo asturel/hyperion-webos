@@ -9,11 +9,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 #include "hyperion_reply_reader.h"
 #include "hyperion_request_builder.h"
+
+#define SOCKET_NAME "/tmp/hyperhdr-domain"
 
 static int _send_message(const void* buffer, size_t size);
 static bool _parse_reply(hyperionnet_Reply_table_t reply);
@@ -25,15 +28,16 @@ static const char* _origin = NULL;
 static bool _connected = false;
 unsigned char recvBuff[1024];
 
-int hyperion_client(const char* origin, const char* hostname, int port, int priority)
+int hyperion_client(const char* origin, const char* hostname2, int port, int priority)
 {
     _origin = origin;
     _priority = priority;
     _connected = false;
     _registered = false;
     sockfd = 0;
-    struct sockaddr_in serv_addr;
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+
+    struct sockaddr_un serv_addr;
+    if ((sockfd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
         WARN("Could not create socket: %s", strerror(errno));
         return 1;
     }
@@ -55,18 +59,21 @@ int hyperion_client(const char* origin, const char* hostname, int port, int prio
         return 1;
     }
 
-    memset(&serv_addr, '0', sizeof(serv_addr));
+    memset(&serv_addr, 0, sizeof(serv_addr));
 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(port);
+    serv_addr.sun_family = AF_UNIX;
+    //serv_addr.sin_port = htons(port);
+    strncpy(serv_addr.sun_path, SOCKET_NAME, sizeof(serv_addr.sun_path) - 1);
 
+    /*
     if (inet_pton(AF_INET, hostname, &serv_addr.sin_addr) <= 0) {
         WARN("inet_pton error occured (hostname: %s): %s", hostname, strerror(errno));
         return 1;
     }
+    */
 
     if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-        WARN("connect() to %s:%d failed: %s", hostname, port, strerror(errno));
+        WARN("connect() to %s:%d failed: %s", SOCKET_NAME, port, strerror(errno));
         return 1;
     }
     _connected = true;
