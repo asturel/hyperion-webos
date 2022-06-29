@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-
+  workflow_dispatch:
 env:
   TOOLCHAIN_URL: https://github.com/openlgtv/buildroot-nc4/releases/download/webos-9f5b1a1/arm-webos-linux-gnueabi_sdk-buildroot.tar.gz
   TOOLCHAIN_SHA256: de49688d9d04bd533da59beb9a21e940203b95cc6ad4958858273b53502eb99b
