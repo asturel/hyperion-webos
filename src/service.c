@@ -28,7 +28,8 @@ void* connection_loop(void* data)
     DBG("Starting connection loop");
     while (service->connection_loop_running) {
         INFO("Connecting hyperion-client..");
-        if ((hyperion_client("webos", service->settings->address, service->settings->port, service->settings->priority)) != 0) {
+        if ((hyperion_client("webos", service->settings->address, service->settings->port,
+                             service->settings->unix_socket, service->settings->priority)) != 0) {
             ERR("Error! hyperion_client.");
         } else {
             INFO("hyperion-client connected!");
@@ -74,6 +75,10 @@ int service_init(service_t* service, settings_t* settings)
     config.quirks = settings->quirks;
 
     service->settings = settings;
+
+    if (service->settings->unix_socket) {
+        service->settings->address = "127.0.0.1";
+    }
 
     unicapture_init(&service->unicapture);
     service->unicapture.vsync = settings->vsync;
