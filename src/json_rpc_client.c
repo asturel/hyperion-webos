@@ -159,6 +159,48 @@ int get_daemon_flavor(char *host, ushort rpc_port, AmbientLightingDaemon *flavor
     return ret;
 }
 
+int set_bri_sat(char *host, ushort rpc_port, double brightnessGain, double saturationGain)
+{
+    int ret = 0;
+
+    if (daemon_flavor == DAEMON_NOT_SET || daemon_flavor == DAEMON_INVALID) {
+        DBG("set_bri_sat: Currently known daemon flavor: %d (%s) -> Fetching new state",
+                daemon_flavor, daemon_to_string(daemon_flavor));
+        if ((ret = get_daemon_flavor(host, rpc_port, &daemon_flavor)) != 0) {
+            ERR("set_bri_sat: Failed to fetch daemon flavor, ret: %d", ret);
+            return -1;
+        }
+        INFO("Detected daemon flavor: %d (%s)", daemon_flavor, daemon_to_string(daemon_flavor));
+    }
+
+    if (daemon_flavor != DAEMON_HYPERION_NG) {
+        WARN("set_bri_sat: Daemon is not Hyperion.NG -> Not submitting brightness & saturation gain!");
+        return -2;
+    }
+
+    jvalue_ref response_body_jval;
+    jvalue_ref post_body = jobject_create();
+    jvalue_ref adjustment_jobj = jobject_create();
+
+    // Assemble nested object first
+    // See: https://docs.hyperion-project.org/en/json/Control.html#control-components
+    jobject_set(adjustment_jobj, j_cstr_to_buffer("saturationGain"), jnumber_create_f64(saturationGain));
+    jobject_set(adjustment_jobj, j_cstr_to_buffer("valueGain"), jnumber_create_f64(brightnessGain));
+
+    // Assemble top-level json
+    jobject_set(post_body, j_cstr_to_buffer("command"), jstring_create("adjustment"));
+    jobject_set(post_body, j_cstr_to_buffer("adjustment"), adjustment_jobj);
+
+    if((ret = send_rpc_message(host, rpc_port, post_body, &response_body_jval)) != 0) {
+        WARN("set_bri_sat: Failed to send RPC message, code: %d", ret);
+        ret = -3;
+    }
+
+    j_release(&post_body);
+    j_release(&adjustment_jobj);
+    return ret;
+}
+
 int set_hdr_state(char *host, ushort rpc_port, bool hdr_active)
 {
     int ret = 0;

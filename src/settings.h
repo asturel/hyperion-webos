@@ -18,6 +18,8 @@ typedef struct _settings_t {
     int fps;
     int width;
     int height;
+    double brightnessGain;
+    double saturationGain;
     bool vsync;
     int quirks;
 
