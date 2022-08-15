@@ -20,6 +20,8 @@ typedef struct _settings_t {
     int height;
     double brightnessGain;
     double saturationGain;
+    double defaultBrightnessGain;
+    double defaultSaturationGain;
     bool vsync;
     int quirks;
 

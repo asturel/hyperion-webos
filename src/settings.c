@@ -16,6 +16,8 @@ void settings_init(settings_t* settings)
     settings->quirks = 0;
     settings->brightnessGain = 1.0;
     settings->saturationGain = 1.0;
+    settings->defaultBrightnessGain = 1.0;
+    settings->defaultSaturationGain = 1.0;
 
     settings->no_video = false;
     settings->no_gui = false;
@@ -66,6 +68,10 @@ int settings_load_json(settings_t* settings, jvalue_ref source)
         jnumber_get_f64(value, &settings->brightnessGain);
     if ((value = jobject_get(source, j_cstr_to_buffer("saturationGain"))) && jis_number(value))
         jnumber_get_f64(value, &settings->saturationGain);
+    if ((value = jobject_get(source, j_cstr_to_buffer("defaultBrightnessGain"))) && jis_number(value))
+        jnumber_get_f64(value, &settings->defaultBrightnessGain);
+    if ((value = jobject_get(source, j_cstr_to_buffer("defaultSaturationGain"))) && jis_number(value))
+        jnumber_get_f64(value, &settings->defaultSaturationGain);
 
     if ((value = jobject_get(source, j_cstr_to_buffer("vsync"))) && jis_boolean(value))
         jboolean_get(value, &settings->vsync);
@@ -94,6 +100,8 @@ int settings_save_json(settings_t* settings, jvalue_ref target)
     jobject_set(target, j_cstr_to_buffer("quirks"), jnumber_create_i32(settings->quirks));
     jobject_set(target, j_cstr_to_buffer("brightnessGain"), jnumber_create_f64(settings->brightnessGain));
     jobject_set(target, j_cstr_to_buffer("saturationGain"), jnumber_create_f64(settings->saturationGain));
+    jobject_set(target, j_cstr_to_buffer("defaultBrightnessGain"), jnumber_create_f64(settings->defaultBrightnessGain));
+    jobject_set(target, j_cstr_to_buffer("defaultSaturationGain"), jnumber_create_f64(settings->defaultSaturationGain));
 
     jobject_set(target, j_cstr_to_buffer("vsync"), jboolean_create(settings->vsync));
     jobject_set(target, j_cstr_to_buffer("novideo"), jboolean_create(settings->no_video));
