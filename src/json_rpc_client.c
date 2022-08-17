@@ -185,7 +185,7 @@ int set_bri_sat(char *host, ushort rpc_port, double brightnessGain, double satur
     // Assemble nested object first
     // See: https://docs.hyperion-project.org/en/json/Control.html#control-components
     jobject_set(adjustment_jobj, j_cstr_to_buffer("saturationGain"), jnumber_create_f64(saturationGain));
-    jobject_set(adjustment_jobj, j_cstr_to_buffer("valueGain"), jnumber_create_f64(brightnessGain));
+    jobject_set(adjustment_jobj, j_cstr_to_buffer("brightnessGain"), jnumber_create_f64(brightnessGain));
 
     // Assemble top-level json
     jobject_set(post_body, j_cstr_to_buffer("command"), jstring_create("adjustment"));
