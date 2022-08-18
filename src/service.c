@@ -471,6 +471,11 @@ static bool picture_callback(LSHandle* sh __attribute__((unused)), LSMessage* ms
         ERR("videooutput_callback: set_hdr_state failed, ret: %d", ret);
     }
 
+    ret = set_bri_sat(service->settings->address, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
+    if (ret != 0) {
+        ERR("videooutput_callback: set_bri_sat failed, ret: %d", ret);
+    }
+
     jstring_free_buffer(dynamic_range_buf);
     j_release(&parsed);
 
