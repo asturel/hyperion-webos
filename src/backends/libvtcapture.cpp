@@ -102,7 +102,7 @@ int capture_start(void* state)
         //Quirk
         if (self->quirk_force_capture) {
             int fd;
-    
+
             DBG("Quirk enabled. Open /dev/forcecapture");
             fd = open("/dev/forcecapture", O_RDWR);
             if(fd < 0) {
@@ -110,10 +110,10 @@ int capture_start(void* state)
                     ret = -2;
                     goto err_init;
             }
-    
+
             INFO("QUIRK_VTCAPTURE_FORCE_CAPTURE: Calling interface with FC_K6HP");
-            ioctl(fd, FC_K6HP); 
-    
+            ioctl(fd, FC_K6HP);
+
             DBG("Closing /dev/forcecapture");
             close(fd);
         }
@@ -244,17 +244,17 @@ int capture_wait(void* state)
             //Quirk
             if (self->quirk_force_capture) {
                 int fd;
-        
+
                 DBG("Quirk enabled. Open /dev/forcecapture");
                 fd = open("/dev/forcecapture", O_RDWR);
                 if(fd < 0) {
                         ERR("Can't open /dev/forcecapture!");
                         return -2;
                 }
-        
+
                 INFO("QUIRK_VTCAPTURE_FORCE_CAPTURE: Calling interface with FC_K6HP");
-                ioctl(fd, FC_K6HP); 
-        
+                ioctl(fd, FC_K6HP);
+
                 DBG("Closing /dev/forcecapture");
                 close(fd);
 
