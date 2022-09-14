@@ -33,10 +33,9 @@ void* connection_loop(void* data)
         } else {
             INFO("hyperion-client connected!");
             service->connected = true;
-            int ret;
             while (service->connection_loop_running) {
-                if ((service->unicapture.video_capture_running || service->unicapture.ui_capture_running) && (ret = hyperion_read()) < 0) {
-                    ERR("Error (%d)! Connection timeout.", ret);
+                if (hyperion_read() < 0) {
+                    ERR("Error! Connection timeout.");
                     break;
                 }
             }
