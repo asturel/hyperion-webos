@@ -207,8 +207,11 @@ int capture_acquire_frame(void* state, frame_info_t* frame)
     int ret = 0;
 
     if ((ret = vtCapture_currentCaptureBuffInfo(self->driver, &buff)) != 0) {
-
         ERR("vtCapture_currentCaptureBuffInfo() failed: %d", ret);
+        if (ret == 13) {
+            INFO("vtCapture_currentCaptureBuffInfo failed, waiting for few ms..");
+            usleep(100000);
+        }
         return -1;
     }
 
