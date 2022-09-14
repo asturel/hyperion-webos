@@ -249,7 +249,7 @@ void* unicapture_run(void* data)
                 height);
         } else {
             got_frame = false;
-            WARN("No valid frame to send...");
+            DBG("No valid frame to send...");
         }
 
         uint64_t frame_processed = getticks_us();
