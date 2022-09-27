@@ -75,11 +75,13 @@ int service_init(service_t* service, settings_t* settings)
     config.quirks = settings->quirks;
 
     service->settings = settings;
-/*
+
     if (service->settings->unix_socket) {
-        service->settings->address = "127.0.0.1";
+        service->settings->ipaddress = "127.0.0.1";
+    } else {
+        service->settings->ipaddress = strdup(service->settings->address);
     }
-*/
+
     unicapture_init(&service->unicapture);
     service->unicapture.vsync = settings->vsync;
     service->unicapture.fps = settings->fps;
@@ -413,12 +415,12 @@ static bool videooutput_callback(LSHandle* sh __attribute__((unused)), LSMessage
         hdr_enabled = true;
     }
 
-    int ret = set_hdr_state(service->settings->address, RPC_PORT, hdr_enabled);
+    int ret = set_hdr_state(service->settings->ipaddress, RPC_PORT, hdr_enabled);
     if (ret != 0) {
         ERR("videooutput_callback: set_hdr_state failed, ret: %d", ret);
     }
 
-    ret = set_bri_sat(service->settings->address, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
+    ret = set_bri_sat(service->settings->ipaddress, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
     if (ret != 0) {
         ERR("videooutput_callback: set_bri_sat failed, ret: %d", ret);
     }
@@ -471,12 +473,12 @@ static bool picture_callback(LSHandle* sh __attribute__((unused)), LSMessage* ms
         hdr_enabled = true;
     }
 
-    int ret = set_hdr_state(service->settings->address, RPC_PORT, hdr_enabled);
+    int ret = set_hdr_state(service->settings->ipaddress, RPC_PORT, hdr_enabled);
     if (ret != 0) {
         ERR("videooutput_callback: set_hdr_state failed, ret: %d", ret);
     }
 
-    ret = set_bri_sat(service->settings->address, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
+    ret = set_bri_sat(service->settings->ipaddress, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
     if (ret != 0) {
         ERR("videooutput_callback: set_bri_sat failed, ret: %d", ret);
     }

@@ -12,6 +12,7 @@ typedef struct _settings_t {
     char* ui_backend;
 
     char* address;
+    char* ipaddress;
     int port;
     int priority;
     bool unix_socket;
