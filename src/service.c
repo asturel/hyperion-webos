@@ -75,11 +75,11 @@ int service_init(service_t* service, settings_t* settings)
     config.quirks = settings->quirks;
 
     service->settings = settings;
-
+/*
     if (service->settings->unix_socket) {
         service->settings->address = "127.0.0.1";
     }
-
+*/
     unicapture_init(&service->unicapture);
     service->unicapture.vsync = settings->vsync;
     service->unicapture.fps = settings->fps;
