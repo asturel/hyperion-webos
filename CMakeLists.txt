@@ -55,7 +55,7 @@ set_target_properties(hyperion-webos PROPERTIES
     INSTALL_RPATH "$ORIGIN:$ORIGIN/lib"
     BUILD_RPATH "$ORIGIN:$ORIGIN/lib"
     # TODO: use above options after upgrading to CMake 3.11
-    # LINK_FLAGS "-Wl,-rpath,'$ORIGIN:$ORIGIN/lib' -Wl,-z,origin"
+    LINK_FLAGS "-Wl,-rpath,'$ORIGIN:$ORIGIN/lib' -Wl,-z,origin"
 )
 target_include_directories(hyperion-webos PRIVATE ${CMAKE_BINARY_DIR})
 target_include_directories(hyperion-webos SYSTEM PUBLIC fbs)
