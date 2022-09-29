@@ -60,11 +60,14 @@ void* connection_loop(void* data)
     return 0;
 }
 
-int service_feed_frame(void* data __attribute__((unused)), int width, int height, uint8_t* rgb_data)
+int service_feed_frame(void* data, int width, int height, uint8_t* rgb_data)
 {
+    service_t* service = (service_t*)data;
     int ret;
     if ((ret = hyperion_set_image(rgb_data, width, height)) != 0) {
         WARN("Frame sending failed: %d", ret);
+        service->connected = false;
+        hyperion_destroy();
     }
 
     return 0;

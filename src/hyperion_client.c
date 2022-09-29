@@ -49,17 +49,32 @@ int hyperion_read()
         INFO("socketfd not created");
         return -99;
     }
+    int errnosav = 0;
+    errno = 0;
+
     uint8_t headbuff[4];
     int n = read(sockfd, headbuff, 4);
-    uint32_t messageSize = ((headbuff[0] << 24) & 0xFF000000) | ((headbuff[1] << 16) & 0x00FF0000) | ((headbuff[2] << 8) & 0x0000FF00) | ((headbuff[3]) & 0x000000FF);
-    if (n < 0 || messageSize >= sizeof(recvBuff)) {
-        WARN("Failed to read hyperion header: %s (%d)", strerror(errno), errno);
-        return 0-errno;
+    if (n == 0) {
+        return 0;
     }
+
+    if (n < 0) {
+        errnosav = errno;
+        WARN("Failed to read hyperion header: %s (%d)", strerror(errnosav), errnosav);
+        return 0-errnosav;
+    }
+
+    uint32_t messageSize = ((headbuff[0] << 24) & 0xFF000000) | ((headbuff[1] << 16) & 0x00FF0000) | ((headbuff[2] << 8) & 0x0000FF00) | ((headbuff[3]) & 0x000000FF);
+    if (messageSize >= sizeof(recvBuff)) {
+        WARN("Failed message size is greater than recv buffer.");
+        return -1;
+    }
+
     n = read(sockfd, recvBuff, messageSize);
     if (n < 0) {
-        WARN("Failed to read hyperion message: %s (%d)", strerror(errno), errno);
-        return 0-errno;
+        errnosav = errno;
+        WARN("Failed to read hyperion message: %s (%d)", strerror(errnosav), errnosav);
+        return 0-errnosav;
     }
     _parse_reply(hyperionnet_Reply_as_root(recvBuff));
     return 0;
