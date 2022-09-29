@@ -45,16 +45,22 @@ int hyperion_client(const char* origin, const char* hostname, int port, bool uni
 
 int hyperion_read()
 {
-    if (!sockfd)
-        return -1;
+    if (!sockfd) {
+        INFO("socketfd not created");
+        return -99;
+    }
     uint8_t headbuff[4];
     int n = read(sockfd, headbuff, 4);
     uint32_t messageSize = ((headbuff[0] << 24) & 0xFF000000) | ((headbuff[1] << 16) & 0x00FF0000) | ((headbuff[2] << 8) & 0x0000FF00) | ((headbuff[3]) & 0x000000FF);
-    if (n < 0 || messageSize >= sizeof(recvBuff))
+    if (n < 0 || messageSize >= sizeof(recvBuff)) {
+        WARN("Failed to read hyperion header: %s (%d)", strerror(errno), errno);
         return -1;
+    }
     n = read(sockfd, recvBuff, messageSize);
-    if (n < 0)
+    if (n < 0) {
+        WARN("Failed to read hyperion message: %s (%d)", strerror(errno), errno);
         return -1;
+    }
     _parse_reply(hyperionnet_Reply_as_root(recvBuff));
     return 0;
 }
