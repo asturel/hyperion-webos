@@ -18,15 +18,7 @@ jobs:
         submodules: recursive
         fetch-depth: 0
 
-    - name: Cache webOS NDK
-      id: cache-ndk
-      uses: actions/cache@v3
-      with:
-        path: ${{github.workspace}}/temp/webos-sdk-x86_64-armv7a-neon-toolchain-1.0.g.sh
-        key: ${{ runner.os }}-ndk
-
     - name: Download webOS NDK
-      if: steps.cache-ndk.outputs.cache-hit != 'true'
       run: wget -q https://github.com/webosbrew/meta-lg-webos-ndk/releases/download/1.0.g-rev.4/webos-sdk-x86_64-armv7a-neon-toolchain-1.0.g.sh -P ${{github.workspace}}/temp
 
     - name: Install webOS NDK
