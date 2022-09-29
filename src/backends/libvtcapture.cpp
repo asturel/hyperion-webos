@@ -210,7 +210,7 @@ int capture_acquire_frame(void* state, frame_info_t* frame)
         ERR("vtCapture_currentCaptureBuffInfo() failed: %d", ret);
         if (ret == 13) {
             INFO("vtCapture_currentCaptureBuffInfo failed, waiting for few ms..");
-            usleep(100000);
+            usleep(100);
         }
         return -1;
     }
@@ -264,12 +264,11 @@ int capture_wait(void* state)
                 return -99; //Restart video capture
             }
             return -1;
-        } else if (ret == 12 || ret == 13) {
+        } else if (ret == 12) {
             ERR("vtCapture_currentCaptureBuffInfo() failed: %d", ret);
             DBG("Returning with video capture stop (-99), to get restarted in next routine.");
             return -99; //Restart video capture
         } else if (ret != 0) {
-
             ERR("vtCapture_currentCaptureBuffInfo() failed: %d", ret);
             return -1;
         }
