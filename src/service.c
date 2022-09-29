@@ -35,7 +35,11 @@ void* connection_loop(void* data)
             INFO("hyperion-client connected!");
             service->connected = true;
             while (service->connection_loop_running) {
-                if (hyperion_read() < 0) {
+                int ret = hyperion_read();
+                if (ret == -11) {
+                    INFO("no data to read, waiting...");
+                    usleep(100);
+                } else if (ret < 0) {
                     ERR("Error! Connection timeout.");
                     break;
                 }
