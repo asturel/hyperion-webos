@@ -270,7 +270,7 @@ int capture_wait(void* state)
             return -99; //Restart video capture
 
         } else if (ret == 13) {
-            INFO("vtCapture_currentCaptureBuffInfo failed: %d, waiting for few ms.. (%A)", ret, self->curr_buff != self->buff.start_addr0);
+            INFO("vtCapture_currentCaptureBuffInfo failed: %d, waiting for few ms.. (%d)", ret, self->curr_buff != self->buff.start_addr0);
             // usleep(100);
         } else if (ret != 0) {
             ERR("vtCapture_currentCaptureBuffInfo() failed: %d", ret);

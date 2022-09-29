@@ -22,7 +22,7 @@ jobs:
       id: cache-ndk
       uses: actions/cache@v3
       with:
-        path: /opt/webos-sdk-x86_64/1.0.g/environment-setup-armv7a-neon-webos-linux-gnueabi
+        path: ${{github.workspace}}/temp/webos-sdk-x86_64-armv7a-neon-toolchain-1.0.g.sh
         key: ${{ runner.os }}-ndk
 
     - name: Download webOS NDK
@@ -30,11 +30,9 @@ jobs:
       run: wget -q https://github.com/webosbrew/meta-lg-webos-ndk/releases/download/1.0.g-rev.4/webos-sdk-x86_64-armv7a-neon-toolchain-1.0.g.sh -P ${{github.workspace}}/temp
 
     - name: Install webOS NDK
-      if: steps.cache-ndk.outputs.cache-hit != 'true'
       run: chmod 755 ${{github.workspace}}/temp/webos-sdk-x86_64-armv7a-neon-toolchain-1.0.g.sh && sudo ${{github.workspace}}/temp/webos-sdk-x86_64-armv7a-neon-toolchain-1.0.g.sh -y
 
     - name: Initialize NDK Environments
-      if: steps.cache-ndk.outputs.cache-hit != 'true'
       run: env -i bash -c '. /opt/webos-sdk-x86_64/1.0.g/environment-setup-armv7a-neon-webos-linux-gnueabi && env' >> $GITHUB_ENV
 
     - name: CMake Version
