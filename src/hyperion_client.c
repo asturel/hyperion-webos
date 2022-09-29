@@ -54,12 +54,12 @@ int hyperion_read()
     uint32_t messageSize = ((headbuff[0] << 24) & 0xFF000000) | ((headbuff[1] << 16) & 0x00FF0000) | ((headbuff[2] << 8) & 0x0000FF00) | ((headbuff[3]) & 0x000000FF);
     if (n < 0 || messageSize >= sizeof(recvBuff)) {
         WARN("Failed to read hyperion header: %s (%d)", strerror(errno), errno);
-        return -1;
+        return 0-errno;
     }
     n = read(sockfd, recvBuff, messageSize);
     if (n < 0) {
         WARN("Failed to read hyperion message: %s (%d)", strerror(errno), errno);
-        return -1;
+        return 0-errno;
     }
     _parse_reply(hyperionnet_Reply_as_root(recvBuff));
     return 0;
