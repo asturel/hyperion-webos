@@ -40,7 +40,7 @@ void* connection_loop(void* data)
                     INFO("no data to read, waiting...");
                     usleep(100);
                 } else if (ret < 0) {
-                    ERR("Error! Connection timeout.");
+                    ERR("Error (%d)! Connection timeout.", ret);
                     break;
                 }
             }
