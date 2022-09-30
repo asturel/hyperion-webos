@@ -210,7 +210,7 @@ int capture_acquire_frame(void* state, frame_info_t* frame)
         ERR("vtCapture_currentCaptureBuffInfo() failed: %d", ret);
         if (ret == 13) {
             INFO("vtCapture_currentCaptureBuffInfo failed: %d, waiting for few ms..", ret);
-            usleep(10000);
+            usleep(1000);
         }
         return -1;
     }
@@ -286,7 +286,7 @@ int capture_wait(void* state)
             WARN("captureCurrentBuffInfo() never returned a new plane!");
             return -99; //Restart video capture
         }
-        usleep(10000);
+        usleep(1000);
     }
 
     self->curr_buff = self->buff.start_addr0;
