@@ -27,31 +27,36 @@ void* connection_loop(void* data)
     service_t* service = (service_t*)data;
     DBG("Starting connection loop");
     while (service->connection_loop_running) {
-        INFO("Connecting hyperion-client..");
-        if ((hyperion_client("webos", service->settings->address, service->settings->port,
-                             service->settings->unix_socket, service->settings->priority)) != 0) {
-            ERR("Error! hyperion_client.");
-        } else {
-            INFO("hyperion-client connected!");
-            service->connected = true;
-            while (service->connection_loop_running) {
-                int ret = hyperion_read();
-                if (ret == -11) {
-                    INFO("no data to read, waiting...");
-                    usleep(100);
-                } else if (ret < 0) {
-                    ERR("Error (%d)! Connection timeout.", ret);
-                    break;
+        if (service->unicapture.video_capture_running || service->unicapture.ui_capture_running) {
+            INFO("Connecting hyperion-client..");
+            if ((hyperion_client("webos", service->settings->address, service->settings->port,
+                                service->settings->unix_socket, service->settings->priority)) != 0) {
+                ERR("Error! hyperion_client.");
+            } else {
+                INFO("hyperion-client connected!");
+                service->connected = true;
+                while (service->connection_loop_running && service->connected) {
+                        int ret = hyperion_read();
+                        if (ret == -11) {
+                            INFO("no data to read, waiting...");
+                            //usleep(100);
+                        } else if (ret < 0) {
+                            ERR("Error (%d)! Connection timeout.", ret);
+                            break;
+                        }
+
                 }
+                service->connected = false;
             }
-            service->connected = false;
-        }
 
-        hyperion_destroy();
+            hyperion_destroy();
 
-        if (service->connection_loop_running) {
-            INFO("Connection destroyed, waiting...");
-            sleep(1);
+            if (service->connection_loop_running) {
+                INFO("Connection destroyed, waiting...");
+                sleep(1);
+            }
+        } else {
+            usleep(1000);
         }
     }
 
@@ -66,8 +71,8 @@ int service_feed_frame(void* data, int width, int height, uint8_t* rgb_data)
     int ret;
     if ((ret = hyperion_set_image(rgb_data, width, height)) != 0) {
         WARN("Frame sending failed: %d", ret);
-        service->connected = false;
-        hyperion_destroy();
+        // service->connected = false;
+        //hyperion_destroy();
     }
 
     return 0;

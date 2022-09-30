@@ -55,7 +55,8 @@ int hyperion_read()
     uint8_t headbuff[4];
     int n = read(sockfd, headbuff, 4);
     if (n == 0) {
-        return 0;
+        DBG("Didn read data from hyperion");
+        return -1;
     }
 
     if (n < 0) {
