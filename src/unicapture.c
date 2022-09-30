@@ -176,6 +176,11 @@ void* unicapture_run(void* data)
             if ((ret = video_capture->acquire_frame(video_capture->state, &video_frame)) != 0) {
                 DBG("video_capture acquire_frame failed: %d", ret);
                 video_frame.pixel_format = PIXFMT_INVALID;
+                if (ret == -99) {
+                    INFO("Stopping video capture.");
+                    this->video_capture->terminate(this->video_capture->state);
+                    this->video_capture_running = false;
+                }
             }
         }
 
