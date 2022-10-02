@@ -204,16 +204,18 @@ int capture_acquire_frame(void* state, frame_info_t* frame)
 {
     vtcapture_backend_state_t* self = (vtcapture_backend_state_t*)state;
     _LibVtCaptureBufferInfo buff;
-    int ret = 0;
+    int ret = vtCapture_currentCaptureBuffInfo(self->driver, &buff);
 
-    if ((ret = vtCapture_currentCaptureBuffInfo(self->driver, &buff)) != 0) {
+    if (ret == 2) {
+        INFO("vtCapture_currentCaptureBuffInfo() failed, retrying...: %d", ret);
+        usleep(1000);
+        return capture_acquire_frame(state, frame);
+    } else if (ret == 13) {
         ERR("vtCapture_currentCaptureBuffInfo() failed: %d", ret);
-        if (ret == 13) {
-            //INFO("vtCapture_currentCaptureBuffInfo failed: %d, waiting for few ms..", ret);
-            //usleep(1000);
-            DBG("Returning with video capture stop (-99), to get restarted in next routine.");
-            return -99; //Restart video capture
-        }
+        DBG("Returning with video capture stop (-99), to get restarted in next routine.");
+        return -99; //Restart video capture
+    } else if (ret != 0) {
+        ERR("vtCapture_currentCaptureBuffInfo() failed: %d", ret);
         return -1;
     }
 
@@ -266,14 +268,10 @@ int capture_wait(void* state)
                 return -99; //Restart video capture
             }
             return -1;
-        } else if (ret == 12) {
+        } else if (ret == 12 || ret == 13) {
             ERR("vtCapture_currentCaptureBuffInfo() failed: %d", ret);
             DBG("Returning with video capture stop (-99), to get restarted in next routine.");
             return -99; //Restart video capture
-
-        } else if (ret == 13) {
-            INFO("vtCapture_currentCaptureBuffInfo failed: %d, waiting for few ms.. (%d)", ret, self->curr_buff != self->buff.start_addr0);
-            // usleep(100);
         } else if (ret != 0) {
             ERR("vtCapture_currentCaptureBuffInfo() failed: %d", ret);
             return -1;
