@@ -432,10 +432,24 @@ static bool videooutput_callback(LSHandle* sh __attribute__((unused)), LSMessage
         ERR("videooutput_callback: set_hdr_state failed, ret: %d", ret);
     }
 
+    #ifdef HYPERION_OLD_OKLA
     ret = set_bri_sat(service->settings->ipaddress, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
     if (ret != 0) {
         ERR("videooutput_callback: set_bri_sat failed, ret: %d", ret);
     }
+    #else
+    if (service->settings->hyperion_adjustments) {
+        const char* s_hdr_type = hdr_enabled ? "hdr" : "sdr";
+        for (unsigned int i = 0; i < service->settings->adjustments_count; i++) {
+            if (strcmp(s_hdr_type, service->settings->adjustments[i]->hdr_type) == 0) {
+                ret = hyperion_set_adjustments(service->settings->ipaddress, RPC_PORT, service->settings->adjustments[i]);
+                if (ret != 0) {
+                    ERR("videooutput_callback: hyperion_set_adjustments failed, ret: %d", ret);
+                }
+            }
+        }
+    }
+    #endif
 
     jstring_free_buffer(hdr_type_buf);
     j_release(&parsed);
@@ -489,11 +503,24 @@ static bool picture_callback(LSHandle* sh __attribute__((unused)), LSMessage* ms
     if (ret != 0) {
         ERR("videooutput_callback: set_hdr_state failed, ret: %d", ret);
     }
-
+    #ifdef HYPERION_OLD_OKLA
     ret = set_bri_sat(service->settings->ipaddress, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
     if (ret != 0) {
         ERR("videooutput_callback: set_bri_sat failed, ret: %d", ret);
     }
+    #else
+    if (service->settings->hyperion_adjustments) {
+        const char* s_hdr_type = hdr_enabled ? "hdr" : "sdr";
+        for (unsigned int i = 0; i < service->settings->adjustments_count; i++) {
+            if (strcmp(s_hdr_type, service->settings->adjustments[i]->hdr_type) == 0) {
+                ret = hyperion_set_adjustments(service->settings->ipaddress, RPC_PORT, service->settings->adjustments[i]);
+                if (ret != 0) {
+                    ERR("videooutput_callback: hyperion_set_adjustments failed, ret: %d", ret);
+                }
+            }
+        }
+    }
+    #endif
 
     jstring_free_buffer(dynamic_range_buf);
     j_release(&parsed);
