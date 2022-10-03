@@ -62,7 +62,7 @@ int hyperion_read()
     if (n < 0) {
         errnosav = errno;
         WARN("Failed to read hyperion header: %s (%d)", strerror(errnosav), errnosav);
-        return 0-errnosav;
+        return 0 - errnosav;
     }
 
     uint32_t messageSize = ((headbuff[0] << 24) & 0xFF000000) | ((headbuff[1] << 16) & 0x00FF0000) | ((headbuff[2] << 8) & 0x0000FF00) | ((headbuff[3]) & 0x000000FF);
@@ -75,7 +75,7 @@ int hyperion_read()
     if (n < 0) {
         errnosav = errno;
         WARN("Failed to read hyperion message: %s (%d)", strerror(errnosav), errnosav);
-        return 0-errnosav;
+        return 0 - errnosav;
     }
     _parse_reply(hyperionnet_Reply_as_root(recvBuff));
     return 0;
@@ -202,14 +202,14 @@ int _connect_inet_socket(const char* hostname, int port)
     timeout.tv_usec = 0;
 
     if (setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout,
-                   sizeof(timeout))
+            sizeof(timeout))
         < 0) {
         WARN("setsockopt(SO_SNDTIMEO) failed: %s", strerror(errno));
         return 1;
     }
 
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout,
-                   sizeof(timeout))
+            sizeof(timeout))
         < 0) {
         WARN("setsockopt(SO_RCVTIMEO) failed: %s", strerror(errno));
         return 1;
@@ -247,14 +247,15 @@ int _connect_unix_socket(const char* hostname)
     timeout.tv_usec = 0;
 
     if (setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout,
-                   sizeof(timeout))
+            sizeof(timeout))
         < 0) {
         WARN("setsockopt(SO_SNDTIMEO) failed: %s", strerror(errno));
         return 1;
     }
 
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout,
-                   sizeof(timeout)) < 0) {
+            sizeof(timeout))
+        < 0) {
         WARN("setsockopt(SO_RCVTIMEO) failed: %s", strerror(errno));
         return 1;
     }

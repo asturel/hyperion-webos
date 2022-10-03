@@ -1,6 +1,6 @@
 #include "settings.h"
-#include <stdio.h>
 #include "log.h"
+#include <stdio.h>
 
 void settings_init(settings_t* settings)
 {
@@ -17,15 +17,15 @@ void settings_init(settings_t* settings)
     settings->width = 320;
     settings->height = 180;
     settings->quirks = 0;
-    #ifdef HYPERION_OLD_OKLA
+#ifdef HYPERION_OLD_OKLA
     settings->brightnessGain = 1.0;
     settings->saturationGain = 1.0;
     settings->defaultBrightnessGain = 1.0;
     settings->defaultSaturationGain = 1.0;
-    #else
+#else
     settings->hyperion_adjustments = true;
 
-    #endif
+#endif
 
     settings->no_video = false;
     settings->no_gui = false;
@@ -41,7 +41,7 @@ int settings_hyperion_load(settings_t* settings, jvalue_ref source)
     jvalue_ref value;
     if ((value = jobject_get(source, j_cstr_to_buffer("hyperion"))) && jis_object(value)) {
         jvalue_ref value2;
-        //jboolean_get(value, &settings->hyperion_adjustments);
+        // jboolean_get(value, &settings->hyperion_adjustments);
 
         if ((value2 = jobject_get(value, j_cstr_to_buffer("enabled"))) && jis_boolean(value2))
             jboolean_get(value2, &settings->hyperion_adjustments);
@@ -54,7 +54,7 @@ int settings_hyperion_load(settings_t* settings, jvalue_ref source)
 
             int adjustmentsSize = jobject_size(value2);
 
-            hyperionAdjustments_t** adjustments = malloc(sizeof(hyperionAdjustments_t)*adjustmentsSize);
+            hyperionAdjustments_t** adjustments = malloc(sizeof(hyperionAdjustments_t) * adjustmentsSize);
 
             INFO("Hyperion settings adjustments (%d): ", adjustmentsSize);
             int j = 0;
@@ -69,7 +69,7 @@ int settings_hyperion_load(settings_t* settings, jvalue_ref source)
                     jobject_iter_init(&it2, key_value.value);
                     char* name = strdup(str.m_str);
                     int size = jobject_size(key_value.value);
-                    hyperionAdjustment_t** kvmap = malloc(sizeof(hyperionAdjustment_t)*size);
+                    hyperionAdjustment_t** kvmap = malloc(sizeof(hyperionAdjustment_t) * size);
 
                     INFO("  adjustments %d. %s: (%d)", j, name, size);
                     int i = 0;
@@ -95,7 +95,6 @@ int settings_hyperion_load(settings_t* settings, jvalue_ref source)
             }
             settings->adjustments = adjustments;
             settings->adjustments_count = adjustmentsSize;
-
         }
     }
     for (unsigned int i = 0; i < settings->adjustments_count; i++) {
@@ -153,7 +152,7 @@ int settings_load_json(settings_t* settings, jvalue_ref source)
     if ((value = jobject_get(source, j_cstr_to_buffer("quirks"))) && jis_number(value))
         jnumber_get_i32(value, &settings->quirks);
 
-    #ifdef HYPERION_OLD_OKLA
+#ifdef HYPERION_OLD_OKLA
     if ((value = jobject_get(source, j_cstr_to_buffer("brightnessGain"))) && jis_number(value))
         jnumber_get_f64(value, &settings->brightnessGain);
     if ((value = jobject_get(source, j_cstr_to_buffer("saturationGain"))) && jis_number(value))
@@ -162,9 +161,9 @@ int settings_load_json(settings_t* settings, jvalue_ref source)
         jnumber_get_f64(value, &settings->defaultBrightnessGain);
     if ((value = jobject_get(source, j_cstr_to_buffer("defaultSaturationGain"))) && jis_number(value))
         jnumber_get_f64(value, &settings->defaultSaturationGain);
-    #else
+#else
     settings_hyperion_load(settings, source);
-    #endif
+#endif
 
     if ((value = jobject_get(source, j_cstr_to_buffer("vsync"))) && jis_boolean(value))
         jboolean_get(value, &settings->vsync);
@@ -175,8 +174,8 @@ int settings_load_json(settings_t* settings, jvalue_ref source)
     if ((value = jobject_get(source, j_cstr_to_buffer("autostart"))) && jis_boolean(value))
         jboolean_get(value, &settings->autostart);
 
-    //settings_save_file(settings, "/tmp/newconfig.json");
-    //DBG("saved");
+    // settings_save_file(settings, "/tmp/newconfig.json");
+    // DBG("saved");
 
     for (unsigned int i = 0; i < settings->adjustments_count; i++) {
         DBG("adjustments %d. %s", i, settings->adjustments[i]->hdr_type);
@@ -188,7 +187,8 @@ int settings_load_json(settings_t* settings, jvalue_ref source)
 }
 
 #ifndef HYPERION_OLD_OKLA
-int settings_hyperion_save_json(settings_t* settings, jvalue_ref target){
+int settings_hyperion_save_json(settings_t* settings, jvalue_ref target)
+{
     DBG("saving hyperion settings");
     jvalue_ref hyperion_body = jobject_create();
     jvalue_ref adjustments_jobj = jobject_create();
@@ -225,14 +225,14 @@ int settings_save_json(settings_t* settings, jvalue_ref target)
     jobject_set(target, j_cstr_to_buffer("width"), jnumber_create_i32(settings->width));
     jobject_set(target, j_cstr_to_buffer("height"), jnumber_create_i32(settings->height));
     jobject_set(target, j_cstr_to_buffer("quirks"), jnumber_create_i32(settings->quirks));
-    #ifdef HYPERION_OLD_OKLA
+#ifdef HYPERION_OLD_OKLA
     jobject_set(target, j_cstr_to_buffer("brightnessGain"), jnumber_create_f64(settings->brightnessGain));
     jobject_set(target, j_cstr_to_buffer("saturationGain"), jnumber_create_f64(settings->saturationGain));
     jobject_set(target, j_cstr_to_buffer("defaultBrightnessGain"), jnumber_create_f64(settings->defaultBrightnessGain));
     jobject_set(target, j_cstr_to_buffer("defaultSaturationGain"), jnumber_create_f64(settings->defaultSaturationGain));
-    #else
+#else
     settings_hyperion_save_json(settings, target);
-    #endif
+#endif
     jobject_set(target, j_cstr_to_buffer("vsync"), jboolean_create(settings->vsync));
     jobject_set(target, j_cstr_to_buffer("novideo"), jboolean_create(settings->no_video));
     jobject_set(target, j_cstr_to_buffer("nogui"), jboolean_create(settings->no_gui));

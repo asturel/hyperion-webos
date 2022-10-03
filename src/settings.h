@@ -1,20 +1,18 @@
 #pragma once
 
-#include <stdbool.h>
 #include <pbnjson.h>
+#include <stdbool.h>
 
 #define SETTINGS_PERSISTENCE_PATH "/media/developer/apps/usr/palm/services/org.webosbrew.piccap.service/config.json"
 
-//#define HYPERION_OLD_OKLA
+// #define HYPERION_OLD_OKLA
 
-typedef struct _hyperionAdjustment_t
-{
+typedef struct _hyperionAdjustment_t {
     char* name;
     double gain;
 } hyperionAdjustment_t;
 
-typedef struct _hyperionAdjustments_t
-{
+typedef struct _hyperionAdjustments_t {
     char* hdr_type;
     hyperionAdjustment_t** adjustments;
     unsigned int adjustments_count;
@@ -35,16 +33,16 @@ typedef struct _settings_t {
     int fps;
     int width;
     int height;
-    #ifdef HYPERION_OLD_OKLA
+#ifdef HYPERION_OLD_OKLA
     double brightnessGain;
     double saturationGain;
     double defaultBrightnessGain;
     double defaultSaturationGain;
-    #else
+#else
     bool hyperion_adjustments;
     hyperionAdjustments_t** adjustments;
     unsigned int adjustments_count;
-    #endif
+#endif
     bool vsync;
     int quirks;
 
@@ -55,8 +53,6 @@ typedef struct _settings_t {
 
     bool dump_frames;
 } settings_t;
-
-
 
 void settings_init(settings_t*);
 

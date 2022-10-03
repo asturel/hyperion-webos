@@ -30,21 +30,21 @@ void* connection_loop(void* data)
         if (service->unicapture.video_capture_running || service->unicapture.ui_capture_running) {
             INFO("Connecting hyperion-client..");
             if ((hyperion_client("webos", service->settings->address, service->settings->port,
-                                service->settings->unix_socket, service->settings->priority)) != 0) {
+                    service->settings->unix_socket, service->settings->priority))
+                != 0) {
                 ERR("Error! hyperion_client.");
             } else {
                 INFO("hyperion-client connected!");
                 service->connected = true;
                 while (service->connection_loop_running && service->connected) {
-                        int ret = hyperion_read();
-                        if (ret == -11) {
-                            INFO("no data to read, waiting...");
-                            //usleep(100);
-                        } else if (ret < 0) {
-                            ERR("Error (%d)! Connection timeout.", ret);
-                            break;
-                        }
-
+                    int ret = hyperion_read();
+                    if (ret == -11) {
+                        INFO("no data to read, waiting...");
+                        // usleep(100);
+                    } else if (ret < 0) {
+                        ERR("Error (%d)! Connection timeout.", ret);
+                        break;
+                    }
                 }
                 service->connected = false;
             }
@@ -72,7 +72,7 @@ int service_feed_frame(void* data __attribute__((unused)), int width, int height
     if ((ret = hyperion_set_image(rgb_data, width, height)) != 0) {
         WARN("Frame sending failed: %d", ret);
         // service->connected = false;
-        //hyperion_destroy();
+        // hyperion_destroy();
     }
 
     return 0;
@@ -302,10 +302,10 @@ bool service_method_set_settings(LSHandle* sh, LSMessage* msg, void* data)
         }
     }
 
-    if (service_destroy(service) == 0){
+    if (service_destroy(service) == 0) {
         service_init(service, service->settings);
         service_start(service);
-    }else{
+    } else {
         service_init(service, service->settings);
     }
 
@@ -421,8 +421,7 @@ static bool videooutput_callback(LSHandle* sh __attribute__((unused)), LSMessage
     if (strcmp(hdr_type_str, "none") == 0) {
         INFO("videooutput_callback: hdrType: %s --> SDR mode", hdr_type_str);
         hdr_enabled = false;
-    }
-    else {
+    } else {
         INFO("videooutput_callback: hdrType: %s --> HDR mode", hdr_type_str);
         hdr_enabled = true;
     }
@@ -432,16 +431,16 @@ static bool videooutput_callback(LSHandle* sh __attribute__((unused)), LSMessage
         ERR("videooutput_callback: set_hdr_state failed, ret: %d", ret);
     }
 
-    #ifdef HYPERION_OLD_OKLA
+#ifdef HYPERION_OLD_OKLA
     ret = set_bri_sat(service->settings->ipaddress, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
     if (ret != 0) {
         ERR("videooutput_callback: set_bri_sat failed, ret: %d", ret);
     }
-    #else
+#else
     if (service->settings->hyperion_adjustments) {
         const char* s_hdr_type = hdr_enabled ? "hdr" : "sdr";
         for (unsigned int i = 0; i < service->settings->adjustments_count; i++) {
-            if (strcasecmp (s_hdr_type, service->settings->adjustments[i]->hdr_type) == 0) {
+            if (strcasecmp(s_hdr_type, service->settings->adjustments[i]->hdr_type) == 0) {
                 ret = hyperion_set_adjustments(service->settings->ipaddress, RPC_PORT, service->settings->adjustments[i]);
                 if (ret != 0) {
                     ERR("videooutput_callback: hyperion_set_adjustments failed, ret: %d", ret);
@@ -449,7 +448,7 @@ static bool videooutput_callback(LSHandle* sh __attribute__((unused)), LSMessage
             }
         }
     }
-    #endif
+#endif
 
     jstring_free_buffer(hdr_type_buf);
     j_release(&parsed);
@@ -493,8 +492,7 @@ static bool picture_callback(LSHandle* sh __attribute__((unused)), LSMessage* ms
     if (strcmp(dynamic_range_str, "sdr") == 0) {
         INFO("picture_callback: dynamicRange: %s --> SDR mode", dynamic_range_str);
         hdr_enabled = false;
-    }
-    else {
+    } else {
         INFO("picture_callback: dynamicRange: %s --> HDR mode", dynamic_range_str);
         hdr_enabled = true;
     }
@@ -503,16 +501,16 @@ static bool picture_callback(LSHandle* sh __attribute__((unused)), LSMessage* ms
     if (ret != 0) {
         ERR("videooutput_callback: set_hdr_state failed, ret: %d", ret);
     }
-    #ifdef HYPERION_OLD_OKLA
+#ifdef HYPERION_OLD_OKLA
     ret = set_bri_sat(service->settings->ipaddress, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
     if (ret != 0) {
         ERR("videooutput_callback: set_bri_sat failed, ret: %d", ret);
     }
-    #else
+#else
     if (service->settings->hyperion_adjustments) {
         const char* s_hdr_type = hdr_enabled ? "hdr" : "sdr";
         for (unsigned int i = 0; i < service->settings->adjustments_count; i++) {
-            if (strcasecmp (s_hdr_type, service->settings->adjustments[i]->hdr_type) == 0) {
+            if (strcasecmp(s_hdr_type, service->settings->adjustments[i]->hdr_type) == 0) {
                 ret = hyperion_set_adjustments(service->settings->ipaddress, RPC_PORT, service->settings->adjustments[i]);
                 if (ret != 0) {
                     ERR("videooutput_callback: hyperion_set_adjustments failed, ret: %d", ret);
@@ -520,7 +518,7 @@ static bool picture_callback(LSHandle* sh __attribute__((unused)), LSMessage* ms
             }
         }
     }
-    #endif
+#endif
 
     jstring_free_buffer(dynamic_range_buf);
     j_release(&parsed);
@@ -539,7 +537,7 @@ int service_register(service_t* service, GMainLoop* loop)
     bool registeredLegacy = false;
     bool registered = false;
 
-     if (&LSRegisterPubPriv != 0) {
+    if (&LSRegisterPubPriv != 0) {
         DBG("Try register on LSRegister");
         registered = LSRegister(SERVICE_NAME, &handle, &lserror);
         DBG("Try legacy register on LSRegisterPubPriv");
@@ -572,7 +570,7 @@ int service_register(service_t* service, GMainLoop* loop)
         WARN("settingsservice/getSystemSettings call failed: %s", lserror.message);
     }
 
-    if (registeredLegacy){
+    if (registeredLegacy) {
         LSRegisterCategory(handlelegacy, "/", methods, NULL, NULL, &lserror);
         LSCategorySetData(handlelegacy, "/", service, &lserror);
         LSGmainAttach(handlelegacy, loop, &lserror);
