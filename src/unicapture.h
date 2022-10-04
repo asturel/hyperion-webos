@@ -2,6 +2,7 @@
 #include "common.h"
 #include <pthread.h>
 #include <stdint.h>
+#include <stdio.h>
 
 typedef enum _pixel_format {
     PIXFMT_INVALID = 0,
@@ -104,6 +105,9 @@ typedef struct _unicapture_state {
     struct {
         double framerate;
     } metrics;
+
+    char* lut_table_file;
+    uint8_t* lut_table;
 } unicapture_state_t;
 
 #ifdef __cplusplus
@@ -114,6 +118,7 @@ int unicapture_try_backends(cap_backend_config_t* config, capture_backend_t* bac
 int unicapture_init_backend(cap_backend_config_t* config, capture_backend_t* backend, char* name);
 int unicapture_start(unicapture_state_t* state);
 int unicapture_stop(unicapture_state_t* state);
+int unicapture_load_lut_table(unicapture_state_t* state);
 #ifdef __cplusplus
 }
 #endif

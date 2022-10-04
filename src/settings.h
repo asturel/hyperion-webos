@@ -46,6 +46,8 @@ typedef struct _settings_t {
     int quirks;
     int process_priority;
 
+    char* lut_table;
+
     bool no_video;
     bool no_gui;
 
