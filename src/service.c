@@ -375,6 +375,34 @@ static bool power_callback(LSHandle* sh __attribute__((unused)), LSMessage* msg,
     return true;
 }
 
+static int hdr_callback(const char* hdr_type __attribute__((unused)), bool hdr_enabled, void* data) {
+    service_t* service = (service_t*)data;
+    int ret = set_hdr_state(service->settings->ipaddress, RPC_PORT, hdr_enabled);
+    if (ret != 0) {
+        ERR("videooutput_callback: set_hdr_state failed, ret: %d", ret);
+    }
+
+#ifdef HYPERION_OLD_OKLA
+    ret = set_bri_sat(service->settings->ipaddress, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
+    if (ret != 0) {
+        ERR("videooutput_callback: set_bri_sat failed, ret: %d", ret);
+    }
+#else
+    if (service->settings->hyperion_adjustments) {
+        const char* s_hdr_type = hdr_enabled ? "hdr" : "sdr";
+        for (unsigned int i = 0; i < service->settings->adjustments_count; i++) {
+            if (strcasecmp(s_hdr_type, service->settings->adjustments[i]->hdr_type) == 0) {
+                ret = hyperion_set_adjustments(service->settings->ipaddress, RPC_PORT, service->settings->adjustments[i]);
+                if (ret != 0) {
+                    ERR("videooutput_callback: hyperion_set_adjustments failed, ret: %d", ret);
+                }
+            }
+        }
+    }
+#endif
+    return ret;
+}
+
 static bool videooutput_callback(LSHandle* sh __attribute__((unused)), LSMessage* msg, void* data)
 {
     JSchemaInfo schema;
@@ -425,6 +453,7 @@ static bool videooutput_callback(LSHandle* sh __attribute__((unused)), LSMessage
         INFO("videooutput_callback: hdrType: %s --> HDR mode", hdr_type_str);
         hdr_enabled = true;
     }
+    /*
 
     int ret = set_hdr_state(service->settings->ipaddress, RPC_PORT, hdr_enabled);
     if (ret != 0) {
@@ -449,6 +478,8 @@ static bool videooutput_callback(LSHandle* sh __attribute__((unused)), LSMessage
         }
     }
 #endif
+*/
+    hdr_callback(hdr_type_str, hdr_enabled, service);
 
     jstring_free_buffer(hdr_type_buf);
     j_release(&parsed);
@@ -496,7 +527,7 @@ static bool picture_callback(LSHandle* sh __attribute__((unused)), LSMessage* ms
         INFO("picture_callback: dynamicRange: %s --> HDR mode", dynamic_range_str);
         hdr_enabled = true;
     }
-
+    /*
     int ret = set_hdr_state(service->settings->ipaddress, RPC_PORT, hdr_enabled);
     if (ret != 0) {
         ERR("videooutput_callback: set_hdr_state failed, ret: %d", ret);
@@ -519,6 +550,8 @@ static bool picture_callback(LSHandle* sh __attribute__((unused)), LSMessage* ms
         }
     }
 #endif
+*/
+    hdr_callback(dynamic_range_str, hdr_enabled, service);
 
     jstring_free_buffer(dynamic_range_buf);
     j_release(&parsed);
