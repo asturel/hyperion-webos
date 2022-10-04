@@ -375,7 +375,8 @@ static bool power_callback(LSHandle* sh __attribute__((unused)), LSMessage* msg,
     return true;
 }
 
-static int hdr_callback(const char* hdr_type __attribute__((unused)), bool hdr_enabled, void* data) {
+static int hdr_callback(const char* hdr_type __attribute__((unused)), bool hdr_enabled, void* data)
+{
     service_t* service = (service_t*)data;
     int ret = set_hdr_state(service->settings->ipaddress, RPC_PORT, hdr_enabled);
     if (ret != 0) {
