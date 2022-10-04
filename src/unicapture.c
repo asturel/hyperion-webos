@@ -9,7 +9,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define LUT_INDEX(y,u,v) ((y + (u<<8) + (v<<16))*3)
+#define LUT_INDEX(y, u, v) ((y + (u << 8) + (v << 16)) * 3)
 #define LUT_FILE_SIZE 256 * 256 * 256 * 3
 
 #define DLSYM_ERROR_CHECK()                         \
@@ -222,7 +222,7 @@ void* unicapture_run(void* data)
             converter_run(&video_converter, &video_frame, &video_frame_converted, PIXFMT_ARGB);
 
             if (this->lut_table != NULL) {
-                for (int i = 0; i < video_frame_converted.width * video_frame_converted.height * 4; i+=4) {
+                for (int i = 0; i < video_frame_converted.width * video_frame_converted.height * 4; i += 4) {
                     // This is somehow RGBA instead of the supposed ARGB
                     uint8_t r = ((uint8_t*)(video_frame_converted.planes[0].buffer))[i + 0];
                     uint8_t g = ((uint8_t*)(video_frame_converted.planes[0].buffer))[i + 1];
@@ -395,7 +395,8 @@ void unicapture_init(unicapture_state_t* this)
     this->lut_table = NULL;
 }
 
-int unicapture_load_lut_table(unicapture_state_t* this) {
+int unicapture_load_lut_table(unicapture_state_t* this)
+{
     free(this->lut_table);
     this->lut_table = NULL;
 
@@ -423,8 +424,8 @@ int unicapture_load_lut_table(unicapture_state_t* this) {
         return 1;
     }
 
-    this->lut_table = (unsigned char *)malloc(length + 1);
-    if(fread(this->lut_table, 1, length, file) != length) {
+    this->lut_table = (unsigned char*)malloc(length + 1);
+    if (fread(this->lut_table, 1, length, file) != length) {
         free(this->lut_table);
         this->lut_table = NULL;
         ERR("Error reading LUT file");
