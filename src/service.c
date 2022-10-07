@@ -356,14 +356,15 @@ static bool power_callback(LSHandle* sh __attribute__((unused)), LSMessage* msg,
     raw_buffer state_buf = jstring_get(state_ref);
     const char* state_str = state_buf.m_str;
     bool target_state = strcmp(state_str, "Active") == 0;
+    bool processing = jobject_containskey(parsed, j_cstr_to_buffer("processing"));
 
-    if (!service->running && target_state && service->power_paused) {
+    if (!service->running && target_state && service->power_paused && !processing) {
         INFO("Resuming after power pause...");
         service->power_paused = false;
         service_start(service);
     }
 
-    if (service->running && !target_state && !service->power_paused) {
+    if (service->running && !target_state && !service->power_paused && !processing) {
         INFO("Pausing due to power event...");
         service->power_paused = true;
         service_stop(service);
