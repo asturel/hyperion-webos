@@ -376,29 +376,47 @@ static bool power_callback(LSHandle* sh __attribute__((unused)), LSMessage* msg,
     return true;
 }
 
-static int hdr_callback(const char* hdr_type __attribute__((unused)), bool hdr_enabled, void* data)
+static int hdr_callback(const char* hdr_type, bool hdr_enabled, void* data)
 {
     service_t* service = (service_t*)data;
     int ret = set_hdr_state(service->settings->ipaddress, RPC_PORT, hdr_enabled);
     if (ret != 0) {
-        ERR("videooutput_callback: set_hdr_state failed, ret: %d", ret);
+        ERR("hdr_callback: set_hdr_state failed, ret: %d", ret);
     }
 
 #ifdef HYPERION_OLD_OKLA
     ret = set_bri_sat(service->settings->ipaddress, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
     if (ret != 0) {
-        ERR("videooutput_callback: set_bri_sat failed, ret: %d", ret);
+        ERR("hdr_callback: set_bri_sat failed, ret: %d", ret);
     }
 #else
     if (service->settings->hyperion_adjustments) {
+        // DBG("hdr_callback looking for adjustments");
         const char* s_hdr_type = hdr_enabled ? "hdr" : "sdr";
+        hyperionAdjustments_t* def_adj = malloc(sizeof(hyperionAdjustments_t*));
+        def_adj->hdr_type = NULL;
+
         for (unsigned int i = 0; i < service->settings->adjustments_count; i++) {
-            if (strcasecmp(s_hdr_type, service->settings->adjustments[i]->hdr_type) == 0) {
-                ret = hyperion_set_adjustments(service->settings->ipaddress, RPC_PORT, service->settings->adjustments[i]);
-                if (ret != 0) {
-                    ERR("videooutput_callback: hyperion_set_adjustments failed, ret: %d", ret);
-                }
+            if (hdr_enabled && def_adj->hdr_type == NULL && strcasecmp(s_hdr_type, service->settings->adjustments[i]->hdr_type) == 0) {
+                DBG("Found adjustment for '%s'.", s_hdr_type);
+                def_adj = service->settings->adjustments[i];
             }
+            if (strcasecmp(hdr_type, service->settings->adjustments[i]->hdr_type) == 0) {
+                DBG("Found adjustment for '%s'.", hdr_type);
+                def_adj = service->settings->adjustments[i];
+            }
+        }
+
+        if (def_adj->hdr_type != NULL) {
+            DBG("hdr_callback: using adjustment '%s'.", def_adj->hdr_type);
+            ret = hyperion_set_adjustments(service->settings->ipaddress, RPC_PORT, def_adj);
+            if (ret != 0) {
+                ERR("hdr_callback: hyperion_set_adjustments failed, ret: %d", ret);
+            } else {
+                DBG("hdr_callback: hyperion_set_adjustments success");
+            }
+        } else {
+            ERR("hdr_callback: didn't found adjustment for '%s' or '%s', hyperion_set_adjustments not called.", hdr_type, s_hdr_type);
         }
     }
 #endif

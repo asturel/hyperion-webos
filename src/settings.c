@@ -38,10 +38,18 @@ void settings_init(settings_t* settings)
 #ifndef HYPERION_OLD_OKLA
 int settings_hyperion_load(settings_t* settings, jvalue_ref source)
 {
+    for (unsigned int k = 0; k < settings->adjustments_count; k++) {
+        for (unsigned int j = 0; j < settings->adjustments[k]->adjustments_count; j++) {
+            free(settings->adjustments[k]->adjustments[j]->name);
+            free(settings->adjustments[k]->adjustments[j]);
+        }
+        free(settings->adjustments[k]);
+    }
+    free(settings->adjustments);
+
     jvalue_ref value;
     if ((value = jobject_get(source, j_cstr_to_buffer("hyperion"))) && jis_object(value)) {
         jvalue_ref value2;
-        // jboolean_get(value, &settings->hyperion_adjustments);
 
         if ((value2 = jobject_get(value, j_cstr_to_buffer("enabled"))) && jis_boolean(value2))
             jboolean_get(value2, &settings->hyperion_adjustments);
@@ -94,7 +102,7 @@ int settings_hyperion_load(settings_t* settings, jvalue_ref source)
                 }
             }
             settings->adjustments = adjustments;
-            settings->adjustments_count = adjustmentsSize;
+            settings->adjustments_count = j;
         }
     }
     for (unsigned int i = 0; i < settings->adjustments_count; i++) {
