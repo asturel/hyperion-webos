@@ -88,12 +88,6 @@ int service_init(service_t* service, settings_t* settings)
 
     service->settings = settings;
 
-    if (service->settings->unix_socket) {
-        service->settings->ipaddress = "127.0.0.1";
-    } else {
-        service->settings->ipaddress = strdup(service->settings->address);
-    }
-
     unicapture_init(&service->unicapture);
     service->unicapture.vsync = settings->vsync;
     service->unicapture.fps = settings->fps;
@@ -387,13 +381,15 @@ static bool power_callback(LSHandle* sh __attribute__((unused)), LSMessage* msg,
 static int hdr_callback(const char* hdr_type, bool hdr_enabled, void* data)
 {
     service_t* service = (service_t*)data;
-    int ret = set_hdr_state(service->settings->ipaddress, RPC_PORT, hdr_enabled);
+    char* address = service->settings->unix_socket ? "127.0.0.1" : service->settings->address;
+
+    int ret = set_hdr_state(address, RPC_PORT, hdr_enabled);
     if (ret != 0) {
         ERR("hdr_callback: set_hdr_state failed, ret: %d", ret);
     }
 
 #ifdef HYPERION_OLD_OKLA
-    ret = set_bri_sat(service->settings->ipaddress, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
+    ret = set_bri_sat(address, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
     if (ret != 0) {
         ERR("hdr_callback: set_bri_sat failed, ret: %d", ret);
     }
@@ -417,7 +413,7 @@ static int hdr_callback(const char* hdr_type, bool hdr_enabled, void* data)
 
         if (def_adj->hdr_type != NULL) {
             DBG("hdr_callback: using adjustment '%s'.", def_adj->hdr_type);
-            ret = hyperion_set_adjustments(service->settings->ipaddress, RPC_PORT, def_adj);
+            ret = hyperion_set_adjustments(address, RPC_PORT, def_adj);
             if (ret != 0) {
                 ERR("hdr_callback: hyperion_set_adjustments failed, ret: %d", ret);
             } else {
@@ -483,13 +479,13 @@ static bool videooutput_callback(LSHandle* sh __attribute__((unused)), LSMessage
     }
     /*
 
-    int ret = set_hdr_state(service->settings->ipaddress, RPC_PORT, hdr_enabled);
+    int ret = set_hdr_state(address, RPC_PORT, hdr_enabled);
     if (ret != 0) {
         ERR("videooutput_callback: set_hdr_state failed, ret: %d", ret);
     }
 
 #ifdef HYPERION_OLD_OKLA
-    ret = set_bri_sat(service->settings->ipaddress, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
+    ret = set_bri_sat(address, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
     if (ret != 0) {
         ERR("videooutput_callback: set_bri_sat failed, ret: %d", ret);
     }
@@ -498,7 +494,7 @@ static bool videooutput_callback(LSHandle* sh __attribute__((unused)), LSMessage
         const char* s_hdr_type = hdr_enabled ? "hdr" : "sdr";
         for (unsigned int i = 0; i < service->settings->adjustments_count; i++) {
             if (strcasecmp(s_hdr_type, service->settings->adjustments[i]->hdr_type) == 0) {
-                ret = hyperion_set_adjustments(service->settings->ipaddress, RPC_PORT, service->settings->adjustments[i]);
+                ret = hyperion_set_adjustments(address, RPC_PORT, service->settings->adjustments[i]);
                 if (ret != 0) {
                     ERR("videooutput_callback: hyperion_set_adjustments failed, ret: %d", ret);
                 }
@@ -556,12 +552,12 @@ static bool picture_callback(LSHandle* sh __attribute__((unused)), LSMessage* ms
         hdr_enabled = true;
     }
     /*
-    int ret = set_hdr_state(service->settings->ipaddress, RPC_PORT, hdr_enabled);
+    int ret = set_hdr_state(address, RPC_PORT, hdr_enabled);
     if (ret != 0) {
         ERR("videooutput_callback: set_hdr_state failed, ret: %d", ret);
     }
 #ifdef HYPERION_OLD_OKLA
-    ret = set_bri_sat(service->settings->ipaddress, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
+    ret = set_bri_sat(address, RPC_PORT, hdr_enabled ? service->settings->brightnessGain : service->settings->defaultBrightnessGain, hdr_enabled ? service->settings->saturationGain : service->settings->defaultSaturationGain);
     if (ret != 0) {
         ERR("videooutput_callback: set_bri_sat failed, ret: %d", ret);
     }
@@ -570,7 +566,7 @@ static bool picture_callback(LSHandle* sh __attribute__((unused)), LSMessage* ms
         const char* s_hdr_type = hdr_enabled ? "hdr" : "sdr";
         for (unsigned int i = 0; i < service->settings->adjustments_count; i++) {
             if (strcasecmp(s_hdr_type, service->settings->adjustments[i]->hdr_type) == 0) {
-                ret = hyperion_set_adjustments(service->settings->ipaddress, RPC_PORT, service->settings->adjustments[i]);
+                ret = hyperion_set_adjustments(address, RPC_PORT, service->settings->adjustments[i]);
                 if (ret != 0) {
                     ERR("videooutput_callback: hyperion_set_adjustments failed, ret: %d", ret);
                 }

@@ -8,7 +8,6 @@ void settings_init(settings_t* settings)
     settings->video_backend = strdup("auto");
 
     settings->address = strdup("");
-    settings->ipaddress = strdup("");
     settings->port = 19400;
     settings->priority = 150;
     settings->unix_socket = false;
@@ -137,13 +136,8 @@ int settings_load_json(settings_t* settings, jvalue_ref source)
         raw_buffer str = jstring_get(value);
         settings->address = strdup(str.m_str);
         jstring_free_buffer(str);
-
-        if (settings->unix_socket) {
-            settings->ipaddress = "127.0.0.1";
-        } else {
-            settings->ipaddress = strdup(settings->address);
-        }
     }
+
     if ((value = jobject_get(source, j_cstr_to_buffer("port"))) && jis_number(value))
         jnumber_get_i32(value, &settings->port);
     if ((value = jobject_get(source, j_cstr_to_buffer("priority"))) && jis_number(value))
