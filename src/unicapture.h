@@ -68,6 +68,8 @@ typedef struct _capture_backend {
 
     capture_acquire_frame_t acquire_frame;
     capture_release_frame_t release_frame;
+    bool initialized;
+    cap_backend_config_t config;
 } capture_backend_t;
 
 /*

@@ -53,6 +53,8 @@ int unicapture_init_backend(cap_backend_config_t* config, capture_backend_t* bac
 
     if (ret == 0) {
         backend->name = strdup(name);
+        backend->initialized = true;
+        backend->config = *config;
         DBG("%s: success", name);
     } else {
         ERR("%s: init failure, code: %d", name, ret);
@@ -109,6 +111,27 @@ void* unicapture_run(void* data)
     unicapture_state_t* this = (unicapture_state_t*)data;
     capture_backend_t* ui_capture = this->ui_capture;
     capture_backend_t* video_capture = this->video_capture;
+
+    if (ui_capture != NULL && !ui_capture->initialized) {
+        INFO("(Re)Initializing UI capture...");
+        int ret;
+        if ((ret = ui_capture->init(&ui_capture->config, &ui_capture->state)) == 0) {
+            DBG("(Re)Initializing UI capture success!");
+            ui_capture->initialized = true;
+        } else {
+            ERR("(Re)Initializing UI capture failed: %d", ret);
+        }
+    }
+    if (video_capture != NULL && !video_capture->initialized) {
+        INFO("(Re)Initializing Video capture...");
+        int ret;
+        if ((ret = video_capture->init(&video_capture->config, &video_capture->state)) == 0) {
+            DBG("(Re)Initializing Video capture success!");
+            video_capture->initialized = true;
+        } else {
+            ERR("(Re)Initializing Video capture failed: %d", ret);
+        }
+    }
 
     uint64_t framecounter = 0;
     uint64_t framecounter_start = getticks_us();
@@ -306,21 +329,32 @@ void* unicapture_run(void* data)
     INFO("Shutting down...");
 
     if (this->vsync_thread_running) {
-        DBG("Waiting for vsync thread to finish...");
+        INFO("Waiting for vsync thread to finish...");
         this->vsync_thread_running = false;
         pthread_join(this->vsync_thread, NULL);
     }
 
     if (this->ui_capture_running) {
-        DBG("Terminating UI capture...");
+        INFO("Terminating UI capture...");
         ui_capture->terminate(ui_capture->state);
         this->ui_capture_running = false;
     }
 
     if (this->video_capture_running) {
-        DBG("Terminating Video capture...");
+        INFO("Terminating Video capture...");
         video_capture->terminate(video_capture->state);
         this->video_capture_running = false;
+    }
+
+    if (ui_capture != NULL && ui_capture->initialized) {
+        INFO("Cleaning UI capture...");
+        ui_capture->cleanup(ui_capture->state);
+        ui_capture->initialized = false;
+    }
+    if (video_capture != NULL && video_capture->initialized) {
+        INFO("Cleaning Video capture...");
+        video_capture->cleanup(video_capture->state);
+        video_capture->initialized = false;
     }
 
     if (final_frame != NULL) {
