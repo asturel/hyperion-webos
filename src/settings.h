@@ -44,6 +44,7 @@ typedef struct _settings_t {
 #endif
     bool vsync;
     int quirks;
+    int process_priority;
 
     bool no_video;
     bool no_gui;

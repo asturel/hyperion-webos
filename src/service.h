@@ -36,3 +36,4 @@ int service_start(service_t* service);
 int service_stop(service_t* service);
 
 int service_destroy(service_t* service);
+int service_change_priority(int priority);

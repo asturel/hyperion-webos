@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <luna-service2/lunaservice.h>
 #include <stdio.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -79,6 +80,19 @@ int service_feed_frame(void* data __attribute__((unused)), int width, int height
     return 0;
 }
 
+int service_change_priority(int priority)
+{
+    if (priority && getuid() == 0) {
+        INFO("Setting priority to %d.", priority);
+        if (setpriority(PRIO_PROCESS, getpid(), priority)) {
+            WARN("Failed to change priority to %d: %s (%d)", priority, strerror(errno), errno);
+            return 1;
+        }
+        return 0;
+    }
+    return 1;
+}
+
 int service_init(service_t* service, settings_t* settings)
 {
     cap_backend_config_t config;
@@ -95,6 +109,8 @@ int service_init(service_t* service, settings_t* settings)
     service->unicapture.callback = &service_feed_frame;
     service->unicapture.callback_data = (void*)service;
     service->unicapture.dump_frames = settings->dump_frames;
+
+    service_change_priority(settings->process_priority);
 
     char* ui_backends[] = { "libgm_backend.so", "libhalgal_backend.so", NULL };
     char* video_backends[] = { "libvtcapture_backend.so", "libdile_vt_backend.so", NULL };
