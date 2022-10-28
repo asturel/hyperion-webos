@@ -174,6 +174,9 @@ int main(int argc, char* argv[])
     }
 
     signal(SIGINT, int_handler);
+    signal(SIGQUIT, int_handler);
+    signal(SIGTERM, int_handler);
+
     loop = g_main_loop_new(NULL, false);
 
     if ((ret = service_init(&service, &settings)) != 0) {
