@@ -157,16 +157,20 @@ int service_init(service_t* service, settings_t* settings)
 
 int service_destroy(service_t* service)
 {
-    service_stop(service);
+    int ret = service_stop(service);
     INFO("Cleaning UI capture...");
-    if (service->unicapture.ui_capture != NULL)
+    if (service->unicapture.ui_capture != NULL && service->unicapture.ui_capture->initialized) {
         service->unicapture.ui_capture->cleanup(service->unicapture.ui_capture->state);
+        service->unicapture.ui_capture->initialized = false;
+    }
 
     INFO("Cleaning Video capture...");
-    if (service->unicapture.video_capture != NULL)
+    if (service->unicapture.video_capture != NULL && service->unicapture.video_capture->initialized) {
         service->unicapture.video_capture->cleanup(service->unicapture.video_capture->state);
+        service->unicapture.video_capture->initialized = false;
+    }
 
-    return 0;
+    return ret;
 }
 
 int service_start(service_t* service)
