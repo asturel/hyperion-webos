@@ -4,6 +4,7 @@
 #include "log.h"
 #include "pthread.h"
 #include "settings.h"
+#include "toast.h"
 #include "unicapture.h"
 #include "version.h"
 #include <errno.h>
@@ -173,6 +174,9 @@ int service_start(service_t* service)
         service->running = false;
         return -1;
     }
+    if (service->settings->notifications)
+        createToast(service, "Capture started");
+
     return 0;
 }
 
@@ -186,7 +190,8 @@ int service_stop(service_t* service)
     unicapture_stop(&service->unicapture);
     pthread_join(service->connection_thread, NULL);
     service->running = false;
-
+    if (service->settings->notifications)
+        createToast(service, "Capture stopped");
     return 0;
 }
 
@@ -585,8 +590,8 @@ static bool picture_callback(LSHandle* sh __attribute__((unused)), LSMessage* ms
 
 int service_register(service_t* service, GMainLoop* loop)
 {
-    LSHandle* handle = NULL;
-    LSHandle* handlelegacy = NULL;
+    // LSHandle* handle = NULL;
+    // LSHandle* handleLegacy = NULL;
     LSError lserror;
 
     LSErrorInit(&lserror);
@@ -596,12 +601,12 @@ int service_register(service_t* service, GMainLoop* loop)
 
     if (&LSRegisterPubPriv != 0) {
         DBG("Try register on LSRegister");
-        registered = LSRegister(SERVICE_NAME, &handle, &lserror);
+        registered = LSRegister(SERVICE_NAME, &service->handle, &lserror);
         DBG("Try legacy register on LSRegisterPubPriv");
-        registeredLegacy = LSRegisterPubPriv(SERVICE_NAME, &handlelegacy, true, &lserror);
+        registeredLegacy = LSRegisterPubPriv(SERVICE_NAME, &service->handleLegacy, true, &lserror);
     } else {
         DBG("Try register on LSRegister");
-        registered = LSRegister(SERVICE_NAME, &handle, &lserror);
+        registered = LSRegister(SERVICE_NAME, &service->handle, &lserror);
     }
 
     if (!registered && !registeredLegacy) {
@@ -610,37 +615,37 @@ int service_register(service_t* service, GMainLoop* loop)
         return -1;
     }
 
-    LSRegisterCategory(handle, "/", methods, NULL, NULL, &lserror);
-    LSCategorySetData(handle, "/", service, &lserror);
+    LSRegisterCategory(service->handle, "/", methods, NULL, NULL, &lserror);
+    LSCategorySetData(service->handle, "/", service, &lserror);
 
-    LSGmainAttach(handle, loop, &lserror);
+    LSGmainAttach(service->handle, loop, &lserror);
 
-    if (!LSCall(handle, "luna://com.webos.service.tvpower/power/getPowerState", "{\"subscribe\":true}", power_callback, (void*)service, NULL, &lserror)) {
+    if (!LSCall(service->handle, "luna://com.webos.service.tvpower/power/getPowerState", "{\"subscribe\":true}", power_callback, (void*)service, NULL, &lserror)) {
         WARN("Power state monitoring call failed: %s", lserror.message);
     }
 
-    if (!LSCall(handle, "luna://com.webos.service.videooutput/getStatus", "{\"subscribe\":true}", videooutput_callback, (void*)service, NULL, &lserror)) {
+    if (!LSCall(service->handle, "luna://com.webos.service.videooutput/getStatus", "{\"subscribe\":true}", videooutput_callback, (void*)service, NULL, &lserror)) {
         WARN("videooutput/getStatus call failed: %s", lserror.message);
     }
 
-    if (!LSCall(handle, "luna://com.webos.settingsservice/getSystemSettings", "{\"category\":\"picture\",\"subscribe\":true}", picture_callback, (void*)service, NULL, &lserror)) {
+    if (!LSCall(service->handle, "luna://com.webos.settingsservice/getSystemSettings", "{\"category\":\"picture\",\"subscribe\":true}", picture_callback, (void*)service, NULL, &lserror)) {
         WARN("settingsservice/getSystemSettings call failed: %s", lserror.message);
     }
 
     if (registeredLegacy) {
-        LSRegisterCategory(handlelegacy, "/", methods, NULL, NULL, &lserror);
-        LSCategorySetData(handlelegacy, "/", service, &lserror);
-        LSGmainAttach(handlelegacy, loop, &lserror);
+        LSRegisterCategory(service->handleLegacy, "/", methods, NULL, NULL, &lserror);
+        LSCategorySetData(service->handleLegacy, "/", service, &lserror);
+        LSGmainAttach(service->handleLegacy, loop, &lserror);
 
-        if (!LSCall(handlelegacy, "luna://com.webos.service.tvpower/power/getPowerState", "{\"subscribe\":true}", power_callback, (void*)service, NULL, &lserror)) {
+        if (!LSCall(service->handleLegacy, "luna://com.webos.service.tvpower/power/getPowerState", "{\"subscribe\":true}", power_callback, (void*)service, NULL, &lserror)) {
             WARN("Power state monitoring call failed: %s", lserror.message);
         }
 
-        if (!LSCall(handlelegacy, "luna://com.webos.service.videooutput/getStatus", "{\"subscribe\":true}", videooutput_callback, (void*)service, NULL, &lserror)) {
+        if (!LSCall(service->handleLegacy, "luna://com.webos.service.videooutput/getStatus", "{\"subscribe\":true}", videooutput_callback, (void*)service, NULL, &lserror)) {
             WARN("videooutput/getStatus call failed: %s", lserror.message);
         }
 
-        if (!LSCall(handlelegacy, "luna://com.webos.settingsservice/getSystemSettings", "{\"category\":\"picture\",\"subscribe\":true}", picture_callback, (void*)service, NULL, &lserror)) {
+        if (!LSCall(service->handleLegacy, "luna://com.webos.settingsservice/getSystemSettings", "{\"category\":\"picture\",\"subscribe\":true}", picture_callback, (void*)service, NULL, &lserror)) {
             WARN("settingsservice/getSystemSettings call failed: %s", lserror.message);
         }
     }

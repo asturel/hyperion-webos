@@ -50,6 +50,8 @@ typedef struct _settings_t {
 
     bool autostart;
 
+    bool notifications;
+
     bool dump_frames;
 } settings_t;
 

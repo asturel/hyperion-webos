@@ -3,6 +3,7 @@
 #include "settings.h"
 #include "unicapture.h"
 #include <glib.h>
+#include <luna-service2/lunaservice.h>
 #include <pthread.h>
 
 #define SERVICE_NAME "org.webosbrew.piccap.service"
@@ -21,6 +22,9 @@ typedef struct {
 
     pthread_t connection_thread;
     bool connection_loop_running;
+
+    LSHandle* handle;
+    LSHandle* handleLegacy;
 
     GMainLoop* loop;
 } service_t;

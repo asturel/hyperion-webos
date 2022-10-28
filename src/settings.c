@@ -29,6 +29,7 @@ void settings_init(settings_t* settings)
     settings->no_video = false;
     settings->no_gui = false;
     settings->autostart = false;
+    settings->notifications = false;
     settings->vsync = true;
 
     settings->dump_frames = false;
@@ -176,6 +177,9 @@ int settings_load_json(settings_t* settings, jvalue_ref source)
     if ((value = jobject_get(source, j_cstr_to_buffer("autostart"))) && jis_boolean(value))
         jboolean_get(value, &settings->autostart);
 
+    if ((value = jobject_get(source, j_cstr_to_buffer("notifications"))) && jis_boolean(value))
+        jboolean_get(value, &settings->notifications);
+
     // settings_save_file(settings, "/tmp/newconfig.json");
     // DBG("saved");
 
@@ -239,6 +243,7 @@ int settings_save_json(settings_t* settings, jvalue_ref target)
     jobject_set(target, j_cstr_to_buffer("novideo"), jboolean_create(settings->no_video));
     jobject_set(target, j_cstr_to_buffer("nogui"), jboolean_create(settings->no_gui));
     jobject_set(target, j_cstr_to_buffer("autostart"), jboolean_create(settings->autostart));
+    jobject_set(target, j_cstr_to_buffer("notifications"), jboolean_create(settings->notifications));
 
     return 0;
 }
