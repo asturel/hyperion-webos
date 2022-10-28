@@ -22,7 +22,7 @@ void settings_init(settings_t* settings)
     settings->defaultBrightnessGain = 1.0;
     settings->defaultSaturationGain = 1.0;
 #else
-    settings->hyperion_adjustments = true;
+    settings->hyperion_adjustments = false;
 
 #endif
 
