@@ -200,20 +200,16 @@ int capture_terminate(void* state)
     return 0;
 }
 
-int capture_acquire_frame_int(void* state, frame_info_t* frame, int retryCount)
+int capture_acquire_frame(void* state, frame_info_t* frame)
 {
     vtcapture_backend_state_t* self = (vtcapture_backend_state_t*)state;
     _LibVtCaptureBufferInfo buff;
     int ret = vtCapture_currentCaptureBuffInfo(self->driver, &buff);
 
     if (ret == 2) {
-        if (retryCount > 10) {
-            ERR("vtCapture_currentCaptureBuffInfo() failed: %d, retry count: %d", ret, retryCount);
-            return -1;
-        }
-        INFO("vtCapture_currentCaptureBuffInfo() failed %d, retrying count: %d", ret, retryCount);
-        usleep(1000);
-        return capture_acquire_frame_int(state, frame, ++retryCount);
+        ERR("vtCapture_currentCaptureBuffInfo() failed: %d", ret);
+        // usleep(1000);
+        return -1;
     } else if (ret == 13) {
         ERR("vtCapture_currentCaptureBuffInfo() failed: %d", ret);
         DBG("Returning with video capture stop (-99), to get restarted in next routine.");
@@ -236,10 +232,6 @@ int capture_acquire_frame_int(void* state, frame_info_t* frame, int retryCount)
     return 0;
 }
 
-int capture_acquire_frame(void* state, frame_info_t* frame)
-{
-    return capture_acquire_frame_int(state, frame, 0);
-}
 
 int capture_release_frame(void* state __attribute__((unused)), frame_info_t* frame __attribute__((unused)))
 {
