@@ -232,7 +232,6 @@ int capture_acquire_frame(void* state, frame_info_t* frame)
     return 0;
 }
 
-
 int capture_release_frame(void* state __attribute__((unused)), frame_info_t* frame __attribute__((unused)))
 {
     return 0;
