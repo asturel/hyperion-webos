@@ -22,7 +22,7 @@ void settings_init(settings_t* settings)
     settings->defaultBrightnessGain = 1.0;
     settings->defaultSaturationGain = 1.0;
 #else
-    settings->hyperion_adjustments = false;
+    settings->hyperion.hyperion_adjustments = false;
 
 #endif
 
@@ -41,23 +41,23 @@ void settings_init(settings_t* settings)
 #ifndef HYPERION_OLD_OKLA
 int settings_hyperion_load(settings_t* settings, jvalue_ref source)
 {
-    for (unsigned int k = 0; k < settings->adjustments_count; k++) {
-        for (unsigned int j = 0; j < settings->adjustments[k]->adjustments_count; j++) {
-            free(settings->adjustments[k]->adjustments[j]->name);
-            free(settings->adjustments[k]->adjustments[j]);
+    for (unsigned int k = 0; k < settings->hyperion.adjustments_count; k++) {
+        for (unsigned int j = 0; j < settings->hyperion.adjustments[k]->adjustments_count; j++) {
+            free(settings->hyperion.adjustments[k]->adjustments[j]->name);
+            free(settings->hyperion.adjustments[k]->adjustments[j]);
         }
-        free(settings->adjustments[k]);
+        free(settings->hyperion.adjustments[k]);
     }
-    free(settings->adjustments);
+    free(settings->hyperion.adjustments);
 
     jvalue_ref value;
     if ((value = jobject_get(source, j_cstr_to_buffer("hyperion"))) && jis_object(value)) {
         jvalue_ref value2;
 
         if ((value2 = jobject_get(value, j_cstr_to_buffer("enabled"))) && jis_boolean(value2))
-            jboolean_get(value2, &settings->hyperion_adjustments);
+            jboolean_get(value2, &settings->hyperion.hyperion_adjustments);
 
-        INFO("Hyperion settings: %s", &settings->hyperion_adjustments ? "enabled" : "disabled");
+        INFO("Hyperion settings: %s", &settings->hyperion.hyperion_adjustments ? "enabled" : "disabled");
         if ((value2 = jobject_get(value, j_cstr_to_buffer("adjustments"))) && jis_object(value)) {
             jobject_iter it;
             jobject_key_value key_value;
@@ -104,14 +104,14 @@ int settings_hyperion_load(settings_t* settings, jvalue_ref source)
                     j++;
                 }
             }
-            settings->adjustments = adjustments;
-            settings->adjustments_count = j;
+            settings->hyperion.adjustments = adjustments;
+            settings->hyperion.adjustments_count = j;
         }
     }
-    for (unsigned int i = 0; i < settings->adjustments_count; i++) {
-        DBG("adjustments %d. %s", i, settings->adjustments[i]->hdr_type);
-        for (unsigned int j = 0; j < settings->adjustments[i]->adjustments_count; j++) {
-            DBG("       %s: %f", settings->adjustments[i]->adjustments[j]->name, settings->adjustments[i]->adjustments[j]->gain);
+    for (unsigned int i = 0; i < settings->hyperion.adjustments_count; i++) {
+        DBG("adjustments %d. %s", i, settings->hyperion.adjustments[i]->hdr_type);
+        for (unsigned int j = 0; j < settings->hyperion.adjustments[i]->adjustments_count; j++) {
+            DBG("       %s: %f", settings->hyperion.adjustments[i]->adjustments[j]->name, settings->hyperion.adjustments[i]->adjustments[j]->gain);
         }
     }
     return 0;
@@ -196,10 +196,10 @@ int settings_load_json(settings_t* settings, jvalue_ref source)
     // settings_save_file(settings, "/tmp/newconfig.json");
     // DBG("saved");
 
-    for (unsigned int i = 0; i < settings->adjustments_count; i++) {
-        DBG("adjustments %d. %s", i, settings->adjustments[i]->hdr_type);
-        for (unsigned int j = 0; j < settings->adjustments[i]->adjustments_count; j++) {
-            DBG("       %s: %f", settings->adjustments[i]->adjustments[j]->name, settings->adjustments[i]->adjustments[j]->gain);
+    for (unsigned int i = 0; i < settings->hyperion.adjustments_count; i++) {
+        DBG("adjustments %d. %s", i, settings->hyperion.adjustments[i]->hdr_type);
+        for (unsigned int j = 0; j < settings->hyperion.adjustments[i]->adjustments_count; j++) {
+            DBG("       %s: %f", settings->hyperion.adjustments[i]->adjustments[j]->name, settings->hyperion.adjustments[i]->adjustments[j]->gain);
         }
     }
     return 0;
@@ -211,17 +211,17 @@ int settings_hyperion_save_json(settings_t* settings, jvalue_ref target)
     DBG("saving hyperion settings");
     jvalue_ref hyperion_body = jobject_create();
     jvalue_ref adjustments_jobj = jobject_create();
-    for (unsigned int i = 0; i < settings->adjustments_count; i++) {
-        DBG("adjustments %d. %s", i, settings->adjustments[i]->hdr_type);
+    for (unsigned int i = 0; i < settings->hyperion.adjustments_count; i++) {
+        DBG("adjustments %d. %s", i, settings->hyperion.adjustments[i]->hdr_type);
         jvalue_ref adjustment_jobj = jobject_create();
-        for (unsigned int j = 0; j < settings->adjustments[i]->adjustments_count; j++) {
-            jobject_set(adjustment_jobj, j_cstr_to_buffer(settings->adjustments[i]->adjustments[j]->name), jnumber_create_f64(settings->adjustments[i]->adjustments[j]->gain));
+        for (unsigned int j = 0; j < settings->hyperion.adjustments[i]->adjustments_count; j++) {
+            jobject_set(adjustment_jobj, j_cstr_to_buffer(settings->hyperion.adjustments[i]->adjustments[j]->name), jnumber_create_f64(settings->hyperion.adjustments[i]->adjustments[j]->gain));
         }
-        jobject_set(adjustments_jobj, j_cstr_to_buffer(settings->adjustments[i]->hdr_type), adjustment_jobj);
+        jobject_set(adjustments_jobj, j_cstr_to_buffer(settings->hyperion.adjustments[i]->hdr_type), adjustment_jobj);
     }
 
     // Assemble top-level json
-    jobject_set(hyperion_body, j_cstr_to_buffer("enabled"), jboolean_create(settings->hyperion_adjustments));
+    jobject_set(hyperion_body, j_cstr_to_buffer("enabled"), jboolean_create(settings->hyperion.hyperion_adjustments));
     jobject_set(hyperion_body, j_cstr_to_buffer("adjustments"), adjustments_jobj);
 
     jobject_set(target, j_cstr_to_buffer("hyperion"), hyperion_body);

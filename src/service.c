@@ -423,20 +423,20 @@ static int hdr_callback(const char* hdr_type, bool hdr_enabled, void* data)
         ERR("hdr_callback: set_bri_sat failed, ret: %d", ret);
     }
 #else
-    if (service->settings->hyperion_adjustments) {
+    if (service->settings->hyperion.hyperion_adjustments) {
         // DBG("hdr_callback looking for adjustments");
         const char* s_hdr_type = hdr_enabled ? "hdr" : "sdr";
-        hyperionAdjustments_t* def_adj = malloc(sizeof(hyperionAdjustments_t*));
+        hyperionAdjustments_t* def_adj = malloc(sizeof(hyperionAdjustments_t));
         def_adj->hdr_type = NULL;
 
-        for (unsigned int i = 0; i < service->settings->adjustments_count; i++) {
-            if (hdr_enabled && def_adj->hdr_type == NULL && strcasecmp(s_hdr_type, service->settings->adjustments[i]->hdr_type) == 0) {
+        for (unsigned int i = 0; i < service->settings->hyperion.adjustments_count; i++) {
+            if (hdr_enabled && def_adj->hdr_type == NULL && strcasecmp(s_hdr_type, service->settings->hyperion.adjustments[i]->hdr_type) == 0) {
                 DBG("Found adjustment for '%s'.", s_hdr_type);
-                def_adj = service->settings->adjustments[i];
+                def_adj = service->settings->hyperion.adjustments[i];
             }
-            if (strcasecmp(hdr_type, service->settings->adjustments[i]->hdr_type) == 0) {
+            if (strcasecmp(hdr_type, service->settings->hyperion.adjustments[i]->hdr_type) == 0) {
                 DBG("Found adjustment for '%s'.", hdr_type);
-                def_adj = service->settings->adjustments[i];
+                def_adj = service->settings->hyperion.adjustments[i];
             }
         }
 
@@ -521,9 +521,9 @@ static bool videooutput_callback(LSHandle* sh __attribute__((unused)), LSMessage
 #else
     if (service->settings->hyperion_adjustments) {
         const char* s_hdr_type = hdr_enabled ? "hdr" : "sdr";
-        for (unsigned int i = 0; i < service->settings->adjustments_count; i++) {
-            if (strcasecmp(s_hdr_type, service->settings->adjustments[i]->hdr_type) == 0) {
-                ret = hyperion_set_adjustments(address, RPC_PORT, service->settings->adjustments[i]);
+        for (unsigned int i = 0; i < service->settings->hyperion.adjustments_count; i++) {
+            if (strcasecmp(s_hdr_type, service->settings->hyperion.adjustments[i]->hdr_type) == 0) {
+                ret = hyperion_set_adjustments(address, RPC_PORT, service->settings->hyperion.adjustments[i]);
                 if (ret != 0) {
                     ERR("videooutput_callback: hyperion_set_adjustments failed, ret: %d", ret);
                 }
@@ -593,9 +593,9 @@ static bool picture_callback(LSHandle* sh __attribute__((unused)), LSMessage* ms
 #else
     if (service->settings->hyperion_adjustments) {
         const char* s_hdr_type = hdr_enabled ? "hdr" : "sdr";
-        for (unsigned int i = 0; i < service->settings->adjustments_count; i++) {
-            if (strcasecmp(s_hdr_type, service->settings->adjustments[i]->hdr_type) == 0) {
-                ret = hyperion_set_adjustments(address, RPC_PORT, service->settings->adjustments[i]);
+        for (unsigned int i = 0; i < service->settings->hyperion.adjustments_count; i++) {
+            if (strcasecmp(s_hdr_type, service->settings->hyperion.adjustments[i]->hdr_type) == 0) {
+                ret = hyperion_set_adjustments(address, RPC_PORT, service->settings->hyperion.adjustments[i]);
                 if (ret != 0) {
                     ERR("videooutput_callback: hyperion_set_adjustments failed, ret: %d", ret);
                 }

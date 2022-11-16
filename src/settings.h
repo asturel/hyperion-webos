@@ -38,9 +38,12 @@ typedef struct _settings_t {
     double defaultBrightnessGain;
     double defaultSaturationGain;
 #else
-    bool hyperion_adjustments;
-    hyperionAdjustments_t** adjustments;
-    unsigned int adjustments_count;
+    struct {
+        bool hyperion_adjustments;
+        hyperionAdjustments_t** adjustments;
+        unsigned int adjustments_count;
+    } hyperion;
+
 #endif
     bool vsync;
     int quirks;
