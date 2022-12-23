@@ -392,7 +392,9 @@ static bool power_callback(LSHandle* sh __attribute__((unused)), LSMessage* msg,
     if (!service->running && target_state && service->power_paused && !processing) {
         INFO("Resuming after power pause...");
         service->power_paused = false;
-        service_start(service);
+        if (service->video_connected || service->unicapture.ui_capture != NULL) {
+            service_start(service);
+        }
     }
 
     if (service->running && !target_state && !service->power_paused && !processing) {
@@ -484,6 +486,51 @@ static bool videooutput_callback(LSHandle* sh __attribute__((unused)), LSMessage
         j_release(&parsed);
         return false;
     }
+
+    char* appid = NULL;
+    jvalue_ref appid_ref = jobject_get(video_0_ref, j_cstr_to_buffer("appId"));
+    if (!jis_null(appid_ref) && jis_valid(appid_ref) && jis_string(appid_ref)) {
+        raw_buffer str = jstring_get(appid_ref);
+        appid = strdup(str.m_str);
+        jstring_free_buffer(str);
+    }
+
+    jvalue_ref video_connected_ref = jobject_get(video_0_ref, j_cstr_to_buffer("connected"));
+    if (!jis_null(video_connected_ref) && jis_valid(video_connected_ref) && jis_boolean(video_connected_ref)) {
+        // bool connected;
+        jboolean_get(video_connected_ref, &service->video_connected);
+        DBG("videooutput_callback: connected %d, appid %s", service->video_connected, appid);
+        if (service->unicapture.ui_capture == NULL) {
+            if (!service->video_connected) {
+                service_stop(service);
+            } else {
+                // if (strcmp(appid, "com.webos.app.mediadiscovery") == 0 || strcmp(appid, "youtube.leanback.v4") == 0 /* || strncmp(appid, "com.webos.app.hdmi", 18) == 0*/) {
+                //     service_start(service);
+                // }
+                bool shouldStart = true;
+
+                if (service->settings->included_apps.count > 0) {
+                    shouldStart = false;
+                    for (unsigned int i = 0; i < service->settings->included_apps.count; i++) {
+                        if (strcmp(appid, service->settings->included_apps.apps[i]) == 0) {
+                            service_start(service);
+                        }
+                    }
+                } else if (service->settings->excluded_apps.count > 0) {
+                    shouldStart = true;
+                    for (unsigned int i = 0; i < service->settings->excluded_apps.count && shouldStart; i++) {
+                        if (strcmp(appid, service->settings->excluded_apps.apps[i]) == 0) {
+                            shouldStart = false;
+                        }
+                    }
+                }
+                if (shouldStart) {
+                    service_start(service);
+                }
+            }
+        }
+    }
+
     jvalue_ref video_info_ref = jobject_get(video_0_ref, j_cstr_to_buffer("videoInfo"));
     if (jis_null(video_info_ref) || !jis_valid(video_info_ref)) {
         j_release(&parsed);

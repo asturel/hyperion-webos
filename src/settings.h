@@ -45,6 +45,15 @@ typedef struct _settings_t {
     } hyperion;
 
 #endif
+    struct {
+        unsigned int count;
+        char** apps;
+    } included_apps;
+    struct {
+        unsigned int count;
+        char** apps;
+    } excluded_apps;
+
     bool vsync;
     int quirks;
     int process_priority;

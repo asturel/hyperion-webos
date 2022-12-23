@@ -117,6 +117,55 @@ int settings_hyperion_load(settings_t* settings, jvalue_ref source)
     return 0;
 }
 #endif
+
+int settings_load_apps(settings_t* settings, jvalue_ref source)
+{
+    // clean up
+    for (unsigned int k = 0; k < settings->included_apps.count; k++) {
+        free(settings->included_apps.apps[k]);
+    }
+    settings->included_apps.count = 0;
+    free(settings->included_apps.apps);
+
+    for (unsigned int k = 0; k < settings->excluded_apps.count; k++) {
+        free(settings->excluded_apps.apps[k]);
+    }
+    settings->excluded_apps.count = 0;
+    free(settings->excluded_apps.apps);
+
+    jvalue_ref value;
+    if ((value = jobject_get(source, j_cstr_to_buffer("included_apps"))) && jis_array(value)) {
+
+        unsigned int s = jarray_size(value);
+        settings->included_apps.apps = malloc(s * sizeof(char*));
+        settings->included_apps.count = s;
+        DBG("included app (%d):", s);
+        for (unsigned int i = 0; i < s; i++) {
+            jvalue_ref app_id = jarray_get(value, i);
+            raw_buffer str = jstring_get(app_id);
+            settings->included_apps.apps[i] = strdup(str.m_str);
+            jstring_free_buffer(str);
+            DBG("    %s", settings->included_apps.apps[i]);
+        }
+    }
+
+    if ((value = jobject_get(source, j_cstr_to_buffer("excluded_apps"))) && jis_array(value)) {
+        unsigned int s = jarray_size(value);
+        settings->excluded_apps.apps = malloc(s * sizeof(char*));
+        settings->excluded_apps.count = s;
+        DBG("excluded apps (%d):", s);
+        for (unsigned int i = 0; i < s; i++) {
+            jvalue_ref app_id = jarray_get(value, i);
+            raw_buffer str = jstring_get(app_id);
+            settings->excluded_apps.apps[i] = strdup(str.m_str);
+            jstring_free_buffer(str);
+            DBG("    %s", settings->excluded_apps.apps[i]);
+        }
+    }
+
+    return 0;
+}
+
 int settings_load_json(settings_t* settings, jvalue_ref source)
 {
     jvalue_ref value;
@@ -181,6 +230,8 @@ int settings_load_json(settings_t* settings, jvalue_ref source)
     settings_hyperion_load(settings, source);
 #endif
 
+    settings_load_apps(settings, source);
+
     if ((value = jobject_get(source, j_cstr_to_buffer("vsync"))) && jis_boolean(value))
         jboolean_get(value, &settings->vsync);
     if ((value = jobject_get(source, j_cstr_to_buffer("novideo"))) && jis_boolean(value))
@@ -230,6 +281,27 @@ int settings_hyperion_save_json(settings_t* settings, jvalue_ref target)
 }
 #endif
 
+int settings_save_apps(settings_t* settings, jvalue_ref target)
+{
+    {
+        jvalue_ref apps = jarray_create(NULL);
+        for (unsigned int i = 0; i < settings->included_apps.count; i++) {
+            DBG("included app %d.: %s", i, settings->included_apps.apps[i]);
+            jarray_set(apps, i, jstring_create(settings->included_apps.apps[i]));
+        }
+        jobject_set(target, j_cstr_to_buffer("included_apps"), apps);
+    }
+    {
+        jvalue_ref apps = jarray_create(NULL);
+        for (unsigned int i = 0; i < settings->excluded_apps.count; i++) {
+            DBG("excluded app %d.? %s", i, settings->excluded_apps.apps[i]);
+            jarray_set(apps, i, jstring_create(settings->excluded_apps.apps[i]));
+        }
+        jobject_set(target, j_cstr_to_buffer("excluded_apps"), apps);
+    }
+    return 0;
+}
+
 int settings_save_json(settings_t* settings, jvalue_ref target)
 {
     jobject_set(target, j_cstr_to_buffer("backend"), jstring_create(settings->video_backend));
@@ -255,6 +327,8 @@ int settings_save_json(settings_t* settings, jvalue_ref target)
 #else
     settings_hyperion_save_json(settings, target);
 #endif
+    settings_save_apps(settings, target);
+
     jobject_set(target, j_cstr_to_buffer("vsync"), jboolean_create(settings->vsync));
     jobject_set(target, j_cstr_to_buffer("novideo"), jboolean_create(settings->no_video));
     jobject_set(target, j_cstr_to_buffer("nogui"), jboolean_create(settings->no_gui));
