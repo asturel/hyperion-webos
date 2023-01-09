@@ -17,6 +17,6 @@ enum CAPTURE_QUIRKS {
     // Reenables video capture using custom kernel module
     QUIRK_VTCAPTURE_FORCE_CAPTURE = 0x100,
 
-    // Capture frames at V4L2_EXT_CAPTURE_SCALER_INPUT = 2 (before V4L2_EXT_CAPTURE_SCALER_OUTPUT = 2)
+    // Capture frames at V4L2_EXT_CAPTURE_SCALER_INPUT = 1 (before V4L2_EXT_CAPTURE_SCALER_OUTPUT = 2)
     QUIRK_VTCAPTURE_DUMP_LOCATION_1 = 0x200,
 };

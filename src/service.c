@@ -184,13 +184,15 @@ int service_start(service_t* service)
     }
 
     service->running = true;
+    unicapture_start(&service->unicapture);
+    /*
     int res = unicapture_start(&service->unicapture);
 
     if (res != 0) {
         service->running = false;
         return res;
     }
-
+*/
     service->connection_loop_running = true;
     if (pthread_create(&service->connection_thread, NULL, connection_loop, service) != 0) {
         unicapture_stop(&service->unicapture);
@@ -497,36 +499,34 @@ static bool videooutput_callback(LSHandle* sh __attribute__((unused)), LSMessage
 
     jvalue_ref video_connected_ref = jobject_get(video_0_ref, j_cstr_to_buffer("connected"));
     if (!jis_null(video_connected_ref) && jis_valid(video_connected_ref) && jis_boolean(video_connected_ref)) {
-        // bool connected;
         jboolean_get(video_connected_ref, &service->video_connected);
         DBG("videooutput_callback: connected %d, appid %s", service->video_connected, appid);
-        if (service->unicapture.ui_capture == NULL) {
-            if (!service->video_connected) {
-                service_stop(service);
-            } else {
-                // if (strcmp(appid, "com.webos.app.mediadiscovery") == 0 || strcmp(appid, "youtube.leanback.v4") == 0 /* || strncmp(appid, "com.webos.app.hdmi", 18) == 0*/) {
-                //     service_start(service);
-                // }
-                bool shouldStart = true;
+        if (!service->video_connected && service->unicapture.ui_capture == NULL) {
+            service_stop(service);
+        } else {
+            bool shouldStart = true;
 
-                if (service->settings->included_apps.count > 0) {
-                    shouldStart = false;
-                    for (unsigned int i = 0; i < service->settings->included_apps.count; i++) {
-                        if (strcmp(appid, service->settings->included_apps.apps[i]) == 0) {
-                            service_start(service);
-                        }
-                    }
-                } else if (service->settings->excluded_apps.count > 0) {
-                    shouldStart = true;
-                    for (unsigned int i = 0; i < service->settings->excluded_apps.count && shouldStart; i++) {
-                        if (strcmp(appid, service->settings->excluded_apps.apps[i]) == 0) {
-                            shouldStart = false;
-                        }
+            if (service->settings->included_apps.count > 0) {
+                shouldStart = false;
+                for (unsigned int i = 0; i < service->settings->included_apps.count; i++) {
+                    if (strcmp(appid, service->settings->included_apps.apps[i]) == 0) {
+                        DBG("INCLUDED APP: '%s', starting capture.", appid);
+                        shouldStart = true;
                     }
                 }
-                if (shouldStart) {
-                    service_start(service);
+            } else if (service->settings->excluded_apps.count > 0) {
+                shouldStart = true;
+                for (unsigned int i = 0; i < service->settings->excluded_apps.count && shouldStart; i++) {
+                    if (strcmp(appid, service->settings->excluded_apps.apps[i]) == 0) {
+                        DBG("EXCLUDED APP: '%s', stopping capture.", appid);
+                        shouldStart = false;
+                    }
                 }
+            }
+            if (shouldStart) {
+                service_start(service);
+            } else {
+                service_stop(service);
             }
         }
     }
