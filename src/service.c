@@ -253,6 +253,24 @@ bool service_method_stop(LSHandle* sh, LSMessage* msg, void* data)
     return false;
 }
 
+bool service_method_startorstop(LSHandle* sh, LSMessage* msg, void* data)
+{
+    service_t* service = (service_t*)data;
+    LSError lserror;
+    LSErrorInit(&lserror);
+
+    jvalue_ref jobj = jobject_create();
+
+    bool ret = service->running ? service_stop(service) : service_start(service);
+    jobject_set(jobj, j_cstr_to_buffer("returnValue"), jboolean_create(ret == 0));
+    jobject_set(jobj, j_cstr_to_buffer("isRunning"), jboolean_create(service->running));
+
+    LSMessageReply(sh, msg, jvalue_tostring_simple(jobj), &lserror);
+
+    j_release(&jobj);
+    return false;
+}
+
 bool service_method_status(LSHandle* sh, LSMessage* msg, void* data)
 {
     service_t* service = (service_t*)data;
@@ -356,6 +374,7 @@ bool service_method_set_settings(LSHandle* sh, LSMessage* msg, void* data)
 LSMethod methods[] = {
     { "start", service_method_start, LUNA_METHOD_FLAGS_NONE },
     { "stop", service_method_stop, LUNA_METHOD_FLAGS_NONE },
+    { "startorstop", service_method_startorstop, LUNA_METHOD_FLAGS_NONE },
     { "status", service_method_status, LUNA_METHOD_FLAGS_NONE },
     { "getSettings", service_method_get_settings, LUNA_METHOD_FLAGS_NONE },
     { "setSettings", service_method_set_settings, LUNA_METHOD_FLAGS_NONE },
