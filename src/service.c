@@ -659,6 +659,75 @@ static bool picture_callback(LSHandle* sh __attribute__((unused)), LSMessage* ms
     return true;
 }
 
+static bool sensor_callback(LSHandle* sh __attribute__((unused)), LSMessage* msg, void* data)
+{
+    JSchemaInfo schema;
+    jvalue_ref parsed;
+    service_t* service = (service_t*)data;
+
+    DBG("Sensor status callback message: %s", LSMessageGetPayload(msg));
+
+    jschema_info_init(&schema, jschema_all(), NULL, NULL);
+    parsed = jdom_parse(j_cstr_to_buffer(LSMessageGetPayload(msg)), DOMOPT_NOOPT, &schema);
+
+    // Parsing failed
+    if (jis_null(parsed)) {
+        j_release(&parsed);
+        DBG("sensor_callback: parsing failed.");
+        return true;
+    }
+
+    jvalue_ref sensorData_ref = jobject_get(parsed, j_cstr_to_buffer("sensorData"));
+    if (!jis_valid(sensorData_ref)) {
+        DBG("sensor_callback: luna-reply does not contain 'state'");
+        j_release(&parsed);
+        return true;
+    }
+    jvalue_ref luminance_value;
+    jvalue_ref visibleLuminance_value;
+
+    int luminance;
+    int visibleLuminance;
+
+    if ((luminance_value = jobject_get(sensorData_ref, j_cstr_to_buffer("luminance"))) && jis_number(luminance_value)) {
+        jnumber_get_i32(luminance_value, &luminance);
+    } else {
+        DBG("sensor_callback: luna-reply does not contain 'luminance'");
+    }
+
+    if ((visibleLuminance_value = jobject_get(sensorData_ref, j_cstr_to_buffer("visibleLuminance"))) && jis_number(visibleLuminance_value)) {
+        jnumber_get_i32(visibleLuminance_value, &visibleLuminance);
+    } else {
+        DBG("sensor_callback: luna-reply does not contain 'visibleLuminance'");
+    }
+    // DBG("sensor_callback: luminance: %d, visibleLuminance: %d", luminance, visibleLuminance);
+
+    if (service->settings->lumen_threshold == 0) {
+        return true;
+    }
+    if (service->power_paused) {
+        return true;
+    }
+
+    if (visibleLuminance > service->settings->lumen_threshold) {
+        if (service->running && !service->lumen_paused) {
+            DBG("sensor_callback: stopping capture due to %d visibleLuminance.", visibleLuminance);
+            service->lumen_paused = true;
+            service_stop(service);
+        }
+    } else {
+        if (!service->running && service->lumen_paused) {
+            DBG("sensor_callback: starting capture due to %d visibleLuminance.", visibleLuminance);
+            service->lumen_paused = false;
+            service_start(service);
+        }
+    }
+
+    j_release(&parsed);
+
+    return true;
+}
+
 int service_register(service_t* service, GMainLoop* loop)
 {
     // LSHandle* handle = NULL;
@@ -703,6 +772,16 @@ int service_register(service_t* service, GMainLoop* loop)
         WARN("settingsservice/getSystemSettings call failed: %s", lserror.message);
     }
 
+    if (!LSCall(service->handle, "luna://com.webos.service.pqcontroller/getEyeqSensorData", "{\"subscribe\":true}", sensor_callback, (void*)service, NULL, &lserror)) {
+        WARN("pqcontroller/getEyeqSensorDatas call failed: %s", lserror.message);
+    }
+
+    if (service->settings->lumen_threshold > 0) {
+        if (!LSCall(service->handle, "luna://com.webos.settingsservice/setSystemSettings", "{\"category\":\"aiPicture\",\"settings\":{\"isAiPictureActing\":true}}", NULL, (void*)service, NULL, &lserror)) {
+            WARN("settingsservice/setSystemSettings call failed: %s", lserror.message);
+        }
+    }
+
     if (registeredLegacy) {
         LSRegisterCategory(service->handleLegacy, "/", methods, NULL, NULL, &lserror);
         LSCategorySetData(service->handleLegacy, "/", service, &lserror);
@@ -718,6 +797,10 @@ int service_register(service_t* service, GMainLoop* loop)
 
         if (!LSCall(service->handleLegacy, "luna://com.webos.settingsservice/getSystemSettings", "{\"category\":\"picture\",\"subscribe\":true}", picture_callback, (void*)service, NULL, &lserror)) {
             WARN("settingsservice/getSystemSettings call failed: %s", lserror.message);
+        }
+
+        if (!LSCall(service->handleLegacy, "luna://com.webos.service.pqcontroller/getEyeqSensorDatas", "{\"subscribe\":true}", sensor_callback, (void*)service, NULL, &lserror)) {
+            WARN("pqcontroller/getEyeqSensorDatas call failed: %s", lserror.message);
         }
     }
 

@@ -32,6 +32,7 @@ void settings_init(settings_t* settings)
     settings->no_gui = false;
     settings->autostart = false;
     settings->notifications = false;
+    settings->lumen_threshold = 500;
     // settings->process_priority = 10;
     settings->vsync = true;
 
@@ -217,6 +218,9 @@ int settings_load_json(settings_t* settings, jvalue_ref source)
     if ((value = jobject_get(source, j_cstr_to_buffer("process_priority"))) && jis_number(value))
         jnumber_get_i32(value, &settings->process_priority);
 
+    if ((value = jobject_get(source, j_cstr_to_buffer("lumen_threshold"))) && jis_number(value))
+        jnumber_get_i32(value, &settings->lumen_threshold);
+
 #ifdef HYPERION_OLD_OKLA
     if ((value = jobject_get(source, j_cstr_to_buffer("brightnessGain"))) && jis_number(value))
         jnumber_get_f64(value, &settings->brightnessGain);
@@ -319,6 +323,7 @@ int settings_save_json(settings_t* settings, jvalue_ref target)
     jobject_set(target, j_cstr_to_buffer("height"), jnumber_create_i32(settings->height));
     jobject_set(target, j_cstr_to_buffer("quirks"), jnumber_create_i32(settings->quirks));
     jobject_set(target, j_cstr_to_buffer("process_priority"), jnumber_create_i32(settings->process_priority));
+    jobject_set(target, j_cstr_to_buffer("lumen_threshold"), jnumber_create_i32(settings->lumen_threshold));
 #ifdef HYPERION_OLD_OKLA
     jobject_set(target, j_cstr_to_buffer("brightnessGain"), jnumber_create_f64(settings->brightnessGain));
     jobject_set(target, j_cstr_to_buffer("saturationGain"), jnumber_create_f64(settings->saturationGain));

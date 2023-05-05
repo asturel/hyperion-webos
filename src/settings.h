@@ -57,6 +57,7 @@ typedef struct _settings_t {
     bool vsync;
     int quirks;
     int process_priority;
+    int lumen_threshold;
 
     char* lut_table;
 
