@@ -19,4 +19,4 @@ int send_rpc_message(char* host, ushort rpc_port, jvalue_ref post_body_jval, jva
 int get_daemon_flavor(char* host, ushort rpc_port, AmbientLightingDaemon* flavor);
 int set_hdr_state(char* host, ushort rpc_port, bool hdr_active);
 int set_bri_sat(char* host, ushort rpc_port, double brightnessGain, double saturationGain);
-int hyperion_set_adjustments(char* host, ushort rpc_port, hyperionAdjustments_t* adjustments);
+int hyperion_set_adjustments(char* host, ushort rpc_port, hyperionAdjustments_t* adjustments, int instances[], unsigned int instance_count);

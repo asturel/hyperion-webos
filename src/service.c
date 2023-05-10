@@ -465,7 +465,7 @@ static int hdr_callback(const char* hdr_type, bool hdr_enabled, void* data)
 
         if (def_adj->hdr_type != NULL) {
             DBG("hdr_callback: using adjustment '%s'.", def_adj->hdr_type);
-            ret = hyperion_set_adjustments(address, RPC_PORT, def_adj);
+            ret = hyperion_set_adjustments(address, RPC_PORT, def_adj, service->settings->hyperion.instances, service->settings->hyperion.instances_count);
             if (ret != 0) {
                 ERR("hdr_callback: hyperion_set_adjustments failed, ret: %d", ret);
             } else {

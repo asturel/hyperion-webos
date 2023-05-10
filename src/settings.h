@@ -42,6 +42,8 @@ typedef struct _settings_t {
         bool hyperion_adjustments;
         hyperionAdjustments_t** adjustments;
         unsigned int adjustments_count;
+        int* instances;
+        unsigned int instances_count;
     } hyperion;
 
 #endif

@@ -200,7 +200,7 @@ int set_bri_sat(char* host, ushort rpc_port, double brightnessGain, double satur
     return ret;
 }
 
-int hyperion_set_adjustments(char* host, ushort rpc_port, hyperionAdjustments_t* adjustments)
+int hyperion_set_adjustments(char* host, ushort rpc_port, hyperionAdjustments_t* adjustments, int hyperion_instances[], unsigned int instance_count)
 {
     int ret = 0;
 
@@ -231,10 +231,28 @@ int hyperion_set_adjustments(char* host, ushort rpc_port, hyperionAdjustments_t*
     jobject_set(post_body, j_cstr_to_buffer("command"), jstring_create("adjustment"));
     jobject_set(post_body, j_cstr_to_buffer("adjustment"), adjustment_jobj);
 
-    if ((ret = send_rpc_message(host, rpc_port, post_body, &response_body_jval)) != 0) {
-        WARN("hyperion_set_adjustments: Failed to send RPC message, code: %d", ret);
-        ret = -3;
+    for (unsigned int i = 0; i < instance_count; i++) {
+        int instanceId = hyperion_instances[i];
+        jvalue_ref instance_switch_body = jobject_create();
+        jobject_set(instance_switch_body, j_cstr_to_buffer("instance"), jnumber_create_i32(instanceId));
+        jobject_set(instance_switch_body, j_cstr_to_buffer("subcommand"), jstring_create("switchTo"));
+        jobject_set(instance_switch_body, j_cstr_to_buffer("command"), jstring_create("instance"));
+
+        if ((ret = send_rpc_message(host, rpc_port, instance_switch_body, &response_body_jval)) != 0) {
+            WARN("hyperion_set_adjustments: Failed to switch instance #%d, code: %d", i, ret);
+            ret = -3;
+        }
+
+        if ((ret = send_rpc_message(host, rpc_port, post_body, &response_body_jval)) != 0) {
+            WARN("hyperion_set_adjustments: Failed to send RPC message (instance #%d), code: %d", i, ret);
+            ret = -3;
+        }
     }
+
+    // if ((ret = send_rpc_message(host, rpc_port, post_body, &response_body_jval)) != 0) {
+    //     WARN("hyperion_set_adjustments: Failed to send RPC message, code: %d", ret);
+    //     ret = -3;
+    // }
 
     j_release(&post_body);
     j_release(&adjustment_jobj);

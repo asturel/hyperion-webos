@@ -55,10 +55,11 @@ int settings_hyperion_load(settings_t* settings, jvalue_ref source)
     if ((value = jobject_get(source, j_cstr_to_buffer("hyperion"))) && jis_object(value)) {
         jvalue_ref value2;
 
-        if ((value2 = jobject_get(value, j_cstr_to_buffer("enabled"))) && jis_boolean(value2))
+        if ((value2 = jobject_get(value, j_cstr_to_buffer("enabled"))) && jis_boolean(value2)) {
             jboolean_get(value2, &settings->hyperion.hyperion_adjustments);
+        }
 
-        INFO("Hyperion settings: %s", &settings->hyperion.hyperion_adjustments ? "enabled" : "disabled");
+        INFO("Hyperion settings: %s", (settings->hyperion.hyperion_adjustments ? "enabled" : "disabled"));
         if ((value2 = jobject_get(value, j_cstr_to_buffer("adjustments"))) && jis_object(value)) {
             jobject_iter it;
             jobject_key_value key_value;
@@ -107,6 +108,17 @@ int settings_hyperion_load(settings_t* settings, jvalue_ref source)
             }
             settings->hyperion.adjustments = adjustments;
             settings->hyperion.adjustments_count = j;
+        }
+        if ((value2 = jobject_get(value, j_cstr_to_buffer("instances"))) && jis_valid(value)) {
+            unsigned int s = jarray_size(value2);
+            DBG("instances: %d", s);
+            settings->hyperion.instances_count = s;
+            settings->hyperion.instances = calloc(settings->hyperion.instances_count, sizeof(int));
+            for (unsigned int i = 0; i < s; i++) {
+                jvalue_ref instance_id = jarray_get(value2, i);
+                jnumber_get_i32(instance_id, &settings->hyperion.instances[i]);
+                DBG("   %d", settings->hyperion.instances[i]);
+            }
         }
     }
     for (unsigned int i = 0; i < settings->hyperion.adjustments_count; i++) {
@@ -266,6 +278,7 @@ int settings_hyperion_save_json(settings_t* settings, jvalue_ref target)
     DBG("saving hyperion settings");
     jvalue_ref hyperion_body = jobject_create();
     jvalue_ref adjustments_jobj = jobject_create();
+    jvalue_ref instances_jarr = jarray_create(NULL);
     for (unsigned int i = 0; i < settings->hyperion.adjustments_count; i++) {
         DBG("adjustments %d. %s", i, settings->hyperion.adjustments[i]->hdr_type);
         jvalue_ref adjustment_jobj = jobject_create();
@@ -274,10 +287,14 @@ int settings_hyperion_save_json(settings_t* settings, jvalue_ref target)
         }
         jobject_set(adjustments_jobj, j_cstr_to_buffer(settings->hyperion.adjustments[i]->hdr_type), adjustment_jobj);
     }
+    for (unsigned int i = 0; i < settings->hyperion.instances_count; i++) {
+        jarray_set(instances_jarr, i, jnumber_create_i32(settings->hyperion.instances[i]));
+    }
 
     // Assemble top-level json
     jobject_set(hyperion_body, j_cstr_to_buffer("enabled"), jboolean_create(settings->hyperion.hyperion_adjustments));
     jobject_set(hyperion_body, j_cstr_to_buffer("adjustments"), adjustments_jobj);
+    jobject_set(hyperion_body, j_cstr_to_buffer("instances"), instances_jarr);
 
     jobject_set(target, j_cstr_to_buffer("hyperion"), hyperion_body);
     DBG("saving hyperion settings done");
